@@ -2,6 +2,7 @@
 #include "zusi_parser/utils.hpp"
 
 #include <iostream>
+#include <limits>
 #include <vector>
 
 using ElementUndRichtung = std::pair<const StrElement*, bool>;
@@ -107,6 +108,40 @@ float ElementLaenge(const StrElement& el) {
   return sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
 }
 
+float Radius(float kr) {
+  return kr == 0.0f ? std::numeric_limits<float>::infinity() : 1/kr;
+}
+
+std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen) {
+  float lenVerbogen = 0;
+
+  // Annahme: Verbogene Weiche hat mehr Elemente als unverbogene, da beim Verbiegen Streckenelemente geteilt werden.
+  assert(verbogen.size() >= unverbogen.size());
+
+  auto itUnverbogen = unverbogen.begin();
+  assert(itUnverbogen != unverbogen.end());
+  float lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
+
+  for (const auto& el : verbogen) {
+    if (std::abs(lenAktElementUnverbogen) < 0.5) {
+      ++itUnverbogen;
+      assert(itUnverbogen != unverbogen.end());
+      lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
+    }
+
+    const auto krdiff = el.first->kr - itUnverbogen->first->kr;
+    std::cout << "verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff = " << krdiff << "\n";
+
+    const float l = ElementLaenge(*el.first);
+    lenVerbogen += l;
+    lenAktElementUnverbogen -= l;
+  }
+
+  assert(std::abs(lenAktElementUnverbogen) < 0.5);
+
+  return {};
+}
+
 int main(int argc, char* argv[]) {
   const std::vector<std::pair<std::string, std::string>> OriginalWeichen = GetWeichenMapping();
 
@@ -117,7 +152,8 @@ int main(int argc, char* argv[]) {
 
   const auto& printElemente = [](const std::vector<ElementUndRichtung>& elemente) {
     for (const auto& el : elemente) {
-      std::cout << " - " << el.first->Nr << ",l=" << ElementLaenge(*el.first) << ", kr=" << (el.second ? el.first->kr : -el.first->kr) << "\n";
+      const auto kr = (el.second ? el.first->kr : -el.first->kr);
+      std::cout << " - " << el.first->Nr << ",l=" << ElementLaenge(*el.first) << ", kr=" << kr << "/r=" << Radius(kr) << "\n";
     }
   };
 
@@ -170,6 +206,7 @@ int main(int argc, char* argv[]) {
         }
 
         // Kruemmung der geraden Straenge in Originaldatei und Bogenweiche vergleichen, um die Kruemmungsparameter herauszufinden
+        BerechneWeichenKruemmung(originalweiche.geraderStrang, bogenweiche.geraderStrang);
 
         // Kruemmung des abzweigenden Stranges anhand der Kruemmungsparameter neu setzen
 
