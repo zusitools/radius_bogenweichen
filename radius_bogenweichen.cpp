@@ -10,12 +10,12 @@ using ElementUndRichtung = std::pair<const StrElement*, bool>;
 constexpr size_t WEICHE = 1 << 2;
 
 const std::unordered_map<std::string, std::string> OriginalWeichen = {
-  {"54 500 1-12 Links", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-14 Links Holzschw K-Oberbau.st3"},
-  {"54 500 1-12 Rechts", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-14 Links Holzschw K-Oberbau.st3"},
-  {"54 500 1-12 Links", "PermanentWay\\Deutschland\\1235mm\\Regeloberbau\\Weichen\\500\\54 500 1-12 Links Holzschw K-Oberbau.st3"},
-  {"54 500 1-12 Rechts", "PermanentWay\\Deutschland\\1235mm\\Regeloberbau\\Weichen\\500\\54 500 1-12 Links Holzschw K-Oberbau.st3"},
-  {"54 500 1-9 1-12 Links", "PermanentWay\\Deutschland\\1235mm\\Regeloberbau\\Weichen\\500\\54 500 1-9 1-12 Links Holzschw K-Oberbau.st3"},
-  {"54 500 1-9 1-12 Rechts", "PermanentWay\\Deutschland\\1235mm\\Regeloberbau\\Weichen\\500\\54 500 1-9 1-12 Links Holzschw K-Oberbau.st3"},
+  {"54 500 1-14 Links", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-14 Links Holzschw K-Oberbau.st3"},
+  {"54 500 1-14 Rechts", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-14 Rechts Holzschw K-Oberbau.st3"},
+  {"54 500 1-12 Links", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-12 Links Holzschw K-Oberbau.st3"},
+  {"54 500 1-12 Rechts", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-12 Rechts Holzschw K-Oberbau.st3"},
+  {"54 500 1-9 1-12 Links", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-9 1-12 Links Holzschw K-Oberbau.st3"},
+  {"54 500 1-9 1-12 Rechts", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-9 1-12 Rechts Holzschw K-Oberbau.st3"},
 };
 
 struct Weiche {
@@ -119,6 +119,7 @@ int main(int argc, char* argv[]) {
         if (!st3Original || !st3Original->Strecke) {
           result = 1;
           std::cout << "Fehler beim Parsen\n";
+          continue;
         }
 
         const auto& originaldateiWeichen = FindeWeichen(*st3Original->Strecke);
@@ -130,7 +131,7 @@ int main(int argc, char* argv[]) {
         const auto& originalweiche = originaldateiWeichen[0];
         std::cout << "Elemente im geraden Strang:\n";
         printElementeMitKruemmung(originalweiche.geraderStrang);
-        std::cout << "Elemente in abzweigenden Strang:\n";
+        std::cout << "Elemente im abzweigenden Strang:\n";
         printElementeMitKruemmung(originalweiche.abzweigenderStrang);
 
         // Herausfinden, welches der abzweigende Strang ist
