@@ -7,6 +7,10 @@
 
 using ElementUndRichtung = std::pair<const StrElement*, bool>;
 
+float GetKruemmung(const ElementUndRichtung& ER) {
+  return ER.second ? ER.first->kr : -ER.first->kr;
+}
+
 constexpr size_t WEICHE = 1 << 2;
 
 struct Weiche {
@@ -130,8 +134,8 @@ std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<
       lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
     }
 
-    const auto krdiff = el.first->kr - itUnverbogen->first->kr;
-    std::cout << " - Lauflaenge " << lenVerbogen << ": verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff = " << krdiff << "\n";
+    const auto krdiff = GetKruemmung(el) - GetKruemmung(*itUnverbogen);
+    std::cout << " - Lauflaenge " << lenVerbogen << ": verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff=" << krdiff << "/Biegeradius=" << Radius(krdiff) << "\n";
     result.emplace_back(lenVerbogen, krdiff);
 
     const float l = ElementLaenge(*el.first);
@@ -168,7 +172,7 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
       assert(itKruemmungen != kruemmungen.end());
     }
 
-    const auto krNeu = (itUnverbogen->first->kr + itKruemmungen->second);
+    const auto krNeu = GetKruemmung(*itUnverbogen) + itKruemmungen->second;
     std::cout << " - Lauflaenge " << lenVerbogen << ": verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
 
     const float l = ElementLaenge(*el.first);
