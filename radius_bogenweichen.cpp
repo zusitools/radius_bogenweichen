@@ -27,7 +27,7 @@ std::vector<Weiche> FindeWeichen(const Strecke& str, bool nurBogenweichen = fals
       return { nullptr, false };
     }
     const auto& nachfolgerNr = nachfolgerArray[idx].Nr;
-    if (nachfolgerNr < 0 || nachfolgerNr >= str.children_StrElement.size() || !str.children_StrElement[nachfolgerNr]) {
+    if (nachfolgerNr < 0 || static_cast<size_t>(nachfolgerNr) >= str.children_StrElement.size() || !str.children_StrElement[nachfolgerNr]) {
       return { nullptr, false };
     }
     return { str.children_StrElement[nachfolgerNr].get(), (el.first->Anschluss & anschlussMask) == 0 };
@@ -113,7 +113,7 @@ float Radius(float kr) {
 }
 
 std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen) {
-  float lenVerbogen = 0;
+  std::vector<std::pair<float, float>> result;
 
   // Annahme: Verbogene Weiche hat mehr Elemente als unverbogene, da beim Verbiegen Streckenelemente geteilt werden.
   assert(verbogen.size() >= unverbogen.size());
@@ -122,6 +122,7 @@ std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<
   assert(itUnverbogen != unverbogen.end());
   float lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
 
+  float lenVerbogen = 0;
   for (const auto& el : verbogen) {
     if (std::abs(lenAktElementUnverbogen) < 0.5) {
       ++itUnverbogen;
@@ -130,7 +131,8 @@ std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<
     }
 
     const auto krdiff = el.first->kr - itUnverbogen->first->kr;
-    std::cout << "verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff = " << krdiff << "\n";
+    std::cout << " - Lauflaenge " << lenVerbogen << ": verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff = " << krdiff << "\n";
+    result.emplace_back(lenVerbogen, krdiff);
 
     const float l = ElementLaenge(*el.first);
     lenVerbogen += l;
@@ -139,14 +141,51 @@ std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<
 
   assert(std::abs(lenAktElementUnverbogen) < 0.5);
 
-  return {};
+  return result;
+}
+
+void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen, const std::vector<std::pair<float, float>> kruemmungen) {
+  // Annahme: Verbogene Weiche hat mehr Elemente als unverbogene, da beim Verbiegen Streckenelemente geteilt werden.
+  assert(verbogen.size() >= unverbogen.size());
+
+  auto itUnverbogen = unverbogen.begin();
+  assert(itUnverbogen != unverbogen.end());
+  float lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
+
+  auto itKruemmungen = kruemmungen.begin();
+  assert(itKruemmungen != kruemmungen.end());
+
+  float lenVerbogen = 0;
+  for (const auto& el : verbogen) {
+    if (std::abs(lenAktElementUnverbogen) < 0.5) {
+      ++itUnverbogen;
+      assert(itUnverbogen != unverbogen.end());
+      lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
+    }
+
+    while (lenVerbogen > itKruemmungen->first + 0.5) {
+      ++itKruemmungen;
+      assert(itKruemmungen != kruemmungen.end());
+    }
+
+    const auto krNeu = (itUnverbogen->first->kr + itKruemmungen->second);
+    std::cout << " - Lauflaenge " << lenVerbogen << ": verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
+
+    const float l = ElementLaenge(*el.first);
+    lenVerbogen += l;
+    lenAktElementUnverbogen -= l;
+  }
+
+  assert(std::abs(lenAktElementUnverbogen) < 0.5);
 }
 
 int main(int argc, char* argv[]) {
+  (void)argc;
   const std::vector<std::pair<std::string, std::string>> OriginalWeichen = GetWeichenMapping();
 
   const auto& zusi = zusixml::parseFile(argv[1]);
   if (!zusi || !zusi->Strecke) {
+    std::cout << "Fehler beim Einlesen der Streckendatei\n";
     return 1;
   }
 
@@ -183,7 +222,7 @@ int main(int argc, char* argv[]) {
 
         const auto& originaldateiWeichen = FindeWeichen(*st3Original->Strecke);
         if (originaldateiWeichen.size() != 1) {
-          std::cout << "Nicht genau eine Weiche gefunden\n";
+          std::cout << "Nicht genau eine Weiche in der ST3-Datei gefunden\n";
           result = 1;
           continue;
         }
@@ -192,6 +231,14 @@ int main(int argc, char* argv[]) {
         printElemente(originalweiche.geraderStrang);
         std::cout << "Elemente im abzweigenden Strang:\n";
         printElemente(originalweiche.abzweigenderStrang);
+
+        if (!std::all_of(originalweiche.geraderStrang.begin(), originalweiche.geraderStrang.end(), [](const auto& elementRichtung) {
+              return std::abs(elementRichtung.first->kr) < 0.00001f;
+            })) {
+          std::cout << "Gerader Strang der unverbogenen Weiche hat nicht ueberall Kruemmung 0\n";
+          result = 1;
+          continue;
+        }
 
         // Herausfinden, welches der abzweigende Strang ist
         assert(bogenweiche.weichensignal->children_MatrixEintrag.size() == 2);
@@ -205,10 +252,11 @@ int main(int argc, char* argv[]) {
           std::cout << "Strang 1 in Bogenweiche ist gerader Strang, Strang 2 ist abzweigender Strang\n";
         }
 
-        // Kruemmung der geraden Straenge in Originaldatei und Bogenweiche vergleichen, um die Kruemmungsparameter herauszufinden
-        BerechneWeichenKruemmung(originalweiche.geraderStrang, bogenweiche.geraderStrang);
+        std::cout << "Berechne Bogenweichen-Parameter aus den Kruemmungsunterschieden des geraden Strangs\n";
+        const auto& krdiffs = BerechneWeichenKruemmung(originalweiche.geraderStrang, bogenweiche.geraderStrang);
 
-        // Kruemmung des abzweigenden Stranges anhand der Kruemmungsparameter neu setzen
+        std::cout << "Wende Bogenweichen-Parameter auf abzweigenden Strang an\n";
+        KorrigiereKruemmungAbzweigenderStrang(originalweiche.abzweigenderStrang, bogenweiche.abzweigenderStrang, krdiffs);
 
         found = true;
         break;
