@@ -92,27 +92,25 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
+  const auto& printElementeMitKruemmung = [](const std::vector<ElementUndRichtung>& elemente) {
+    for (const auto& el : elemente) {
+      std::cout << " - " << el.first->Nr << ", kr=" << (el.second ? el.first->kr : -el.first->kr) << "\n";
+    }
+  };
+
   int result = 0;
-  for (const auto& bogenweiche : FindeWeichen(*zusi->Strecke, true)) {
+  for (auto& bogenweiche : FindeWeichen(*zusi->Strecke, true)) {  // non-const wg. std::swap(geraderStrang, abzweigenderStrang)
     std::cout << "\nBogenweiche gefunden an Element " << bogenweiche.startElement.first->Nr << "\n";
     std::cout << "Erster Signalframe:\n";
     const auto& dateinameErsterSignalframe = bogenweiche.weichensignal->children_SignalFrame.at(0)->Datei.Dateiname;
     std::cout << " - " << dateinameErsterSignalframe << "\n";
 
     std::cout << "Elemente in Strang 1:\n";
-    for (const auto& el : bogenweiche.geraderStrang) {
-      std::cout << " - " << el.first->Nr << ", kr=" << (el.second ? el.first->kr : -el.first->kr) << "\n";
-    }
-
+    printElementeMitKruemmung(bogenweiche.geraderStrang);
     std::cout << "Elemente in Strang 2:\n";
-    for (const auto& el : bogenweiche.abzweigenderStrang) {
-      std::cout << " - " << el.first->Nr << ", kr=" << (el.second ? el.first->kr : -el.first->kr) << "\n";
-    }
+    printElementeMitKruemmung(bogenweiche.abzweigenderStrang);
 
-    // TODO Herausfinden, welches der abzweigende Strang ist
-    assert(bogenweiche.weichensignal->children_MatrixEintrag.size() == 2);
-
-    // TODO Originaldatei herausfinden; Kruemmung des abzweigenden Stranges aus Originaldatei ableiten und zur existierenden Kruemmung addieren
+    // Originaldatei herausfinden
     bool found = false;
     for (const auto& it : OriginalWeichen) {
       if (dateinameErsterSignalframe.find(it.first) != std::string::npos) {
@@ -129,6 +127,25 @@ int main(int argc, char* argv[]) {
           result = 1;
           continue;
         }
+        const auto& originalweiche = originaldateiWeichen[0];
+        std::cout << "Elemente im geraden Strang:\n";
+        printElementeMitKruemmung(originalweiche.geraderStrang);
+        std::cout << "Elemente in abzweigenden Strang:\n";
+        printElementeMitKruemmung(originalweiche.abzweigenderStrang);
+
+        // Herausfinden, welches der abzweigende Strang ist
+        assert(bogenweiche.weichensignal->children_MatrixEintrag.size() == 2);
+        assert(originalweiche.weichensignal->children_MatrixEintrag.size() == 2);
+
+        if ((bogenweiche.weichensignal->children_MatrixEintrag[0]->Signalbild > bogenweiche.weichensignal->children_MatrixEintrag[1]->Signalbild) !=
+            (originalweiche.weichensignal->children_MatrixEintrag[0]->Signalbild > originalweiche.weichensignal->children_MatrixEintrag[1]->Signalbild)) {
+          std::swap(bogenweiche.geraderStrang, bogenweiche.abzweigenderStrang);
+          std::cout << "Strang 2 in Bogenweiche ist gerader Strang, Strang 1 ist abzweigender Strang\n";
+        } else {
+          std::cout << "Strang 1 in Bogenweiche ist gerader Strang, Strang 2 ist abzweigender Strang\n";
+        }
+
+        // Kruemmung des abzweigenden Stranges aus Originaldatei ableiten und zur existierenden Kruemmung addieren
 
         found = true;
         break;
