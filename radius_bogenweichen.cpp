@@ -2,21 +2,11 @@
 #include "zusi_parser/utils.hpp"
 
 #include <iostream>
-#include <unordered_map>
 #include <vector>
 
 using ElementUndRichtung = std::pair<const StrElement*, bool>;
 
 constexpr size_t WEICHE = 1 << 2;
-
-const std::unordered_map<std::string, std::string> OriginalWeichen = {
-  {"54 500 1-14 Links", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-14 Links Holzschw K-Oberbau.st3"},
-  {"54 500 1-14 Rechts", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-14 Rechts Holzschw K-Oberbau.st3"},
-  {"54 500 1-12 Links", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-12 Links Holzschw K-Oberbau.st3"},
-  {"54 500 1-12 Rechts", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-12 Rechts Holzschw K-Oberbau.st3"},
-  {"54 500 1-9 1-12 Links", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-9 1-12 Links Holzschw K-Oberbau.st3"},
-  {"54 500 1-9 1-12 Rechts", "PermanentWay\\Deutschland\\1435mm\\Regeloberbau\\Weichen\\500\\54 500 1-9 1-12 Rechts Holzschw K-Oberbau.st3"},
-};
 
 struct Weiche {
   const Signal* weichensignal;
@@ -86,15 +76,48 @@ std::vector<Weiche> FindeWeichen(const Strecke& str, bool nurBogenweichen = fals
   return result;
 }
 
+std::vector<std::pair<std::string, std::string>> GetWeichenMapping() {
+  std::vector<std::pair<std::string, std::string>> result;
+
+  std::cout << "Lies Weichenzuordnung aus weichen.txt\n";
+  std::ifstream infile("weichen.txt");
+  if (!infile) {
+    std::cout << "Fehler beim Laden von weichen.txt\n";
+  }
+  std::string line;
+  while (std::getline(infile, line)) {
+    const auto semicolonPos = line.find(';');
+    if (semicolonPos == std::string::npos) {
+      continue;
+    }
+
+    std::string pattern = line.substr(0, semicolonPos);
+    std::string datei = line.substr(semicolonPos + 1);
+    std::cout << pattern << " -> " << datei << "\n";
+    result.emplace_back(std::move(pattern), std::move(datei));
+  };
+
+  return result;
+}
+
+float ElementLaenge(const StrElement& el) {
+  const auto& xdiff = el.b.X - el.g.X;
+  const auto& ydiff = el.b.Y - el.g.Y;
+  const auto& zdiff = el.b.Z - el.g.Z;
+  return sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
+}
+
 int main(int argc, char* argv[]) {
+  const std::vector<std::pair<std::string, std::string>> OriginalWeichen = GetWeichenMapping();
+
   const auto& zusi = zusixml::parseFile(argv[1]);
   if (!zusi || !zusi->Strecke) {
     return 1;
   }
 
-  const auto& printElementeMitKruemmung = [](const std::vector<ElementUndRichtung>& elemente) {
+  const auto& printElemente = [](const std::vector<ElementUndRichtung>& elemente) {
     for (const auto& el : elemente) {
-      std::cout << " - " << el.first->Nr << ", kr=" << (el.second ? el.first->kr : -el.first->kr) << "\n";
+      std::cout << " - " << el.first->Nr << ",l=" << ElementLaenge(*el.first) << ", kr=" << (el.second ? el.first->kr : -el.first->kr) << "\n";
     }
   };
 
@@ -106,9 +129,9 @@ int main(int argc, char* argv[]) {
     std::cout << " - " << dateinameErsterSignalframe << "\n";
 
     std::cout << "Elemente in Strang 1:\n";
-    printElementeMitKruemmung(bogenweiche.geraderStrang);
+    printElemente(bogenweiche.geraderStrang);
     std::cout << "Elemente in Strang 2:\n";
-    printElementeMitKruemmung(bogenweiche.abzweigenderStrang);
+    printElemente(bogenweiche.abzweigenderStrang);
 
     // Originaldatei herausfinden
     bool found = false;
@@ -130,9 +153,9 @@ int main(int argc, char* argv[]) {
         }
         const auto& originalweiche = originaldateiWeichen[0];
         std::cout << "Elemente im geraden Strang:\n";
-        printElementeMitKruemmung(originalweiche.geraderStrang);
+        printElemente(originalweiche.geraderStrang);
         std::cout << "Elemente im abzweigenden Strang:\n";
-        printElementeMitKruemmung(originalweiche.abzweigenderStrang);
+        printElemente(originalweiche.abzweigenderStrang);
 
         // Herausfinden, welches der abzweigende Strang ist
         assert(bogenweiche.weichensignal->children_MatrixEintrag.size() == 2);
@@ -146,7 +169,9 @@ int main(int argc, char* argv[]) {
           std::cout << "Strang 1 in Bogenweiche ist gerader Strang, Strang 2 ist abzweigender Strang\n";
         }
 
-        // Kruemmung des abzweigenden Stranges aus Originaldatei ableiten und zur existierenden Kruemmung addieren
+        // Kruemmung der geraden Straenge in Originaldatei und Bogenweiche vergleichen, um die Kruemmungsparameter herauszufinden
+
+        // Kruemmung des abzweigenden Stranges anhand der Kruemmungsparameter neu setzen
 
         found = true;
         break;
