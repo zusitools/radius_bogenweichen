@@ -133,15 +133,10 @@ float GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, flo
   }
 
   if (std::abs(kr) >= 1/10000.0) {
-    const float xdiff = p2.X - p1.X;
-    const float ydiff = p2.Y - p1.Y;
-    const float zdiff = p2.Z - p1.Z;
-    const float laenge = sqrt(xdiff * xdiff + ydiff * ydiff + zdiff * zdiff);
-
     const float radius = 1.0/kr;
-    // Element repraesentiert eine Kreissehne im Kreis mit Radius r
+    // Element repraesentiert eine Kreissehne im Kreis mit Radius `radius`
     // Berechne Sehnenwinkel und daraus Winkel der Kreistangente
-    const float sehnenwinkel = 2.0 * asin(laenge / (2.0 * std::abs(radius)));
+    const float sehnenwinkel = 2.0 * asin(ElementLaenge(*elementRichtung.first) / (2.0 * std::abs(radius)));
     const float tangentenwinkel = sehnenwinkel / 2.0;
 
     if ((kr > 0) == (ende == ElementEnde::Anfang)) {
