@@ -1,6 +1,7 @@
 #include "zusi_parser/zusi_types.hpp"
 #include "zusi_parser/utils.hpp"
 
+#define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -10,7 +11,7 @@
 
 using ElementUndRichtung = std::pair<const StrElement*, bool>;
 
-float GetKruemmung(const ElementUndRichtung& ER) {
+double GetKruemmung(const ElementUndRichtung& ER) {
   return ER.second ? ER.first->kr : -ER.first->kr;
 }
 
@@ -108,36 +109,35 @@ std::vector<std::pair<std::string, std::string>> GetWeichenMapping() {
   return result;
 }
 
-float ElementLaenge(const StrElement& el) {
+double ElementLaenge(const StrElement& el) {
   const auto& xdiff = el.b.X - el.g.X;
   const auto& ydiff = el.b.Y - el.g.Y;
   const auto& zdiff = el.b.Z - el.g.Z;
   return sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
 }
 
-float Radius(float kr) {
-  return kr == 0.0f ? std::numeric_limits<float>::infinity() : 1/kr;
+double Radius(double kr) {
+  return kr == 0.0f ? std::numeric_limits<double>::infinity() : 1/kr;
 }
 
 enum class ElementEnde {
   Anfang, Ende
 };
 
-float GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, float kr /* in Normrichtung */) {
-  const auto& p1 = (elementRichtung.second == (ende == ElementEnde::Anfang)) ? elementRichtung.first->g : elementRichtung.first->b;
-  const auto& p2 = (elementRichtung.second == (ende == ElementEnde::Anfang)) ? elementRichtung.first->b : elementRichtung.first->g;
-  float result = atan2(p2.Y - p1.Y, p2.X - p1.X);
+double GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, double kr /* in Normrichtung */) {
+  const auto& p1 = elementRichtung.second ? elementRichtung.first->g : elementRichtung.first->b;
+  const auto& p2 = elementRichtung.second ? elementRichtung.first->b : elementRichtung.first->g;
+  double result = atan2(p2.Y - p1.Y, p2.X - p1.X);  // Winkel ohne Kruemmung
 
-  if (!elementRichtung.first) {
-    kr = -kr;
-  }
-
-  if (std::abs(kr) >= 1/10000.0) {
-    const float radius = 1.0/kr;
+  if (std::abs(kr) >= 1/100000.0) {
+    if (!elementRichtung.second) {
+      kr = -kr;
+    }
+    const double radius = 1.0/kr;
     // Element repraesentiert eine Kreissehne im Kreis mit Radius `radius`
     // Berechne Sehnenwinkel und daraus Winkel der Kreistangente
-    const float sehnenwinkel = 2.0 * asin(ElementLaenge(*elementRichtung.first) / (2.0 * std::abs(radius)));
-    const float tangentenwinkel = sehnenwinkel / 2.0;
+    const double sehnenwinkel = 2.0 * asin(ElementLaenge(*elementRichtung.first) / (2.0 * std::abs(radius)));
+    const double tangentenwinkel = sehnenwinkel / 2.0;
 
     if ((kr > 0) == (ende == ElementEnde::Anfang)) {
       // Positive Kruemmung: Linksbogen -> erst Ausschlag nach rechts, also gegen Uhrzeigersinn
@@ -147,24 +147,26 @@ float GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, flo
     }
   }
 
-  if (result < 0) {
-    result += 3.141592;
+  if (result > M_PI) {
+    result = M_2_PI - result;
+  } else if (result < -M_PI) {
+    result += M_2_PI;
   }
 
   return result;
 }
 
-std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen) {
-  std::vector<std::pair<float, float>> result;
+std::vector<std::pair<double, double>> BerechneWeichenKruemmung(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen) {
+  std::vector<std::pair<double, double>> result;
 
   // Annahme: Verbogene Weiche hat mehr Elemente als unverbogene, da beim Verbiegen Streckenelemente geteilt werden.
   assert(verbogen.size() >= unverbogen.size());
 
   auto itUnverbogen = unverbogen.begin();
   assert(itUnverbogen != unverbogen.end());
-  float lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
+  double lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
 
-  float lenVerbogen = 0;
+  double lenVerbogen = 0;
   for (const auto& el : verbogen) {
     if (std::abs(lenAktElementUnverbogen) < 0.5) {
       ++itUnverbogen;
@@ -176,7 +178,7 @@ std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<
     std::cout << " - Lauflaenge " << lenVerbogen << ": verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff=" << krdiff << "/Biegeradius=" << Radius(krdiff) << "\n";
     result.emplace_back(lenVerbogen, krdiff);
 
-    const float l = ElementLaenge(*el.first);
+    const double l = ElementLaenge(*el.first);
     lenVerbogen += l;
     lenAktElementUnverbogen -= l;
   }
@@ -186,20 +188,20 @@ std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<
   return result;
 }
 
-std::vector<std::pair<float, float>> LiesWeichenKruemmung(const Zusi& datei) {
-  std::vector<std::pair<float, float>> result;
+std::vector<std::pair<double, double>> LiesWeichenKruemmung(const Zusi& datei) {
+  std::vector<std::pair<double, double>> result;
   auto dateibeschreibung = datei.Info->Beschreibung;
   std::replace(dateibeschreibung.begin(), dateibeschreibung.end(), ',', '.');
 
   auto pos = dateibeschreibung.find('=');
-  float l = 0;
-  float l_neu = l;
+  double l = 0;
+  double l_neu = l;
   try {
     while (pos != std::string::npos) {
       if ((pos >= 1) && (std::string_view(&dateibeschreibung.at(pos-1), 1) == "l")) {
         l_neu += std::stof(&dateibeschreibung.at(pos+1), nullptr);
       } else if ((pos >= 2) && (std::string_view(&dateibeschreibung.at(pos-2), 2) == "kr")) {
-        const float kr = std::stof(&dateibeschreibung.at(pos+1), nullptr);
+        const double kr = std::stof(&dateibeschreibung.at(pos+1), nullptr);
         std::cout << " - Lauflaenge " << l << ": kr=" << kr << "/r=" << Radius(kr) << "\n";
         l = l_neu;
         result.emplace_back(l, kr);
@@ -208,24 +210,24 @@ std::vector<std::pair<float, float>> LiesWeichenKruemmung(const Zusi& datei) {
     }
   } catch (const std::invalid_argument&) {
     std::cout << "Fehler beim Lesen der Dateibeschreibung\n";
-    return std::vector<std::pair<float, float>>();
+    return std::vector<std::pair<double, double>>();
   }
 
   return result;
 }
 
-void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen, const std::vector<std::pair<float, float>> kruemmungen) {
+void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen, const std::vector<std::pair<double, double>> kruemmungen) {
   // Annahme: Verbogene Weiche hat mehr Elemente als unverbogene, da beim Verbiegen Streckenelemente geteilt werden.
   assert(verbogen.size() >= unverbogen.size());
 
   auto itUnverbogen = unverbogen.begin();
   assert(itUnverbogen != unverbogen.end());
-  float lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
+  double lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
 
   auto itKruemmungen = kruemmungen.begin();
   assert(itKruemmungen != kruemmungen.end());
 
-  float lenVerbogen = 0;
+  double lenVerbogen = 0;
   for (const auto& el : verbogen) {
     if (std::abs(lenAktElementUnverbogen) < 0.5) {
       ++itUnverbogen;
@@ -241,7 +243,7 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
     const auto krNeu = GetKruemmung(*itUnverbogen) + itKruemmungen->second;
     std::cout << " - Lauflaenge " << lenVerbogen << ": verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
 
-    const float l = ElementLaenge(*el.first);
+    const double l = ElementLaenge(*el.first);
     lenVerbogen += l;
     lenAktElementUnverbogen -= l;
   }
@@ -268,6 +270,7 @@ int main(int argc, char* argv[]) {
         const auto& el2 = elemente[i+1];
         const auto winkelEl1Ende = GetWinkel(el, ElementEnde::Ende, el.first->kr);
         const auto winkelEl2Anfang = GetWinkel(el2, ElementEnde::Anfang, el2.first->kr);
+        // std::cout << ", w1=" << winkelEl1Ende << ", w2=" << winkelEl2Anfang;
         const auto unstetigkeit = std::abs(winkelEl1Ende - winkelEl2Anfang);
         std::cout << ", Unstetigkeit " << unstetigkeit;
       }
@@ -331,7 +334,7 @@ int main(int argc, char* argv[]) {
           std::cout << "Strang 1 in Bogenweiche ist gerader Strang, Strang 2 ist abzweigender Strang\n";
         }
 
-        std::vector<std::pair<float, float>> krdiffs;
+        std::vector<std::pair<double, double>> krdiffs;
         std::cout << "Lies Bogenweichen-Parameter aus verbogener LS3-Datei " << dateinameErsterSignalframe << "\n";
         const auto& ls3Verbogen = zusixml::parseFile(zusixml::zusiPfadZuOsPfad(dateinameErsterSignalframe, ""));
         if (ls3Verbogen) {
