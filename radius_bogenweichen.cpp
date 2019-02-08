@@ -167,7 +167,7 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
       lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
     }
 
-    while (lenVerbogen > itKruemmungen->first + 0.5) {
+    while (lenVerbogen > itKruemmungen->first + 2.5) {
       ++itKruemmungen;
       assert(itKruemmungen != kruemmungen.end());
     }
