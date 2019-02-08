@@ -1,6 +1,7 @@
 #include "zusi_parser/zusi_types.hpp"
 #include "zusi_parser/utils.hpp"
 
+#include <cmath>
 #include <iostream>
 #include <limits>
 #include <string>
@@ -118,6 +119,46 @@ float Radius(float kr) {
   return kr == 0.0f ? std::numeric_limits<float>::infinity() : 1/kr;
 }
 
+enum class ElementEnde {
+  Anfang, Ende
+};
+
+float GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, float kr /* in Normrichtung */) {
+  const auto& p1 = (elementRichtung.second == (ende == ElementEnde::Anfang)) ? elementRichtung.first->g : elementRichtung.first->b;
+  const auto& p2 = (elementRichtung.second == (ende == ElementEnde::Anfang)) ? elementRichtung.first->b : elementRichtung.first->g;
+  float result = atan2(p2.Y - p1.Y, p2.X - p1.X);
+
+  if (!elementRichtung.first) {
+    kr = -kr;
+  }
+
+  if (std::abs(kr) >= 1/10000.0) {
+    const float xdiff = p2.X - p1.X;
+    const float ydiff = p2.Y - p1.Y;
+    const float zdiff = p2.Z - p1.Z;
+    const float laenge = sqrt(xdiff * xdiff + ydiff * ydiff + zdiff * zdiff);
+
+    const float radius = 1.0/kr;
+    // Element repraesentiert eine Kreissehne im Kreis mit Radius r
+    // Berechne Sehnenwinkel und daraus Winkel der Kreistangente
+    const float sehnenwinkel = 2.0 * asin(laenge / (2.0 * std::abs(radius)));
+    const float tangentenwinkel = sehnenwinkel / 2.0;
+
+    if ((kr > 0) == (ende == ElementEnde::Anfang)) {
+      // Positive Kruemmung: Linksbogen -> erst Ausschlag nach rechts, also gegen Uhrzeigersinn
+      result -= tangentenwinkel;
+    } else {
+      result += tangentenwinkel;
+    }
+  }
+
+  if (result < 0) {
+    result += 3.141592;
+  }
+
+  return result;
+}
+
 std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen) {
   std::vector<std::pair<float, float>> result;
 
@@ -224,9 +265,18 @@ int main(int argc, char* argv[]) {
   }
 
   const auto& printElemente = [](const std::vector<ElementUndRichtung>& elemente) {
-    for (const auto& el : elemente) {
-      const auto kr = (el.second ? el.first->kr : -el.first->kr);
-      std::cout << " - " << el.first->Nr << ",l=" << ElementLaenge(*el.first) << ", kr=" << kr << "/r=" << Radius(kr) << "\n";
+    for (size_t i = 0, len = elemente.size(); i < len; ++i) {
+      const auto& el = elemente[i];
+      const auto kr = GetKruemmung(el);
+      std::cout << " - " << el.first->Nr << ",l=" << ElementLaenge(*el.first) << ", kr=" << kr << "/r=" << Radius(kr);
+      if (i < len - 1) {
+        const auto& el2 = elemente[i+1];
+        const auto winkelEl1Ende = GetWinkel(el, ElementEnde::Ende, el.first->kr);
+        const auto winkelEl2Anfang = GetWinkel(el2, ElementEnde::Anfang, el2.first->kr);
+        const auto unstetigkeit = std::abs(winkelEl1Ende - winkelEl2Anfang);
+        std::cout << ", Unstetigkeit " << unstetigkeit;
+      }
+      std::cout << "\n";
     }
   };
 
