@@ -3,6 +3,8 @@
 
 #include <iostream>
 #include <limits>
+#include <string>
+#include <string_view>
 #include <vector>
 
 using ElementUndRichtung = std::pair<const StrElement*, bool>;
@@ -148,6 +150,34 @@ std::vector<std::pair<float, float>> BerechneWeichenKruemmung(const std::vector<
   return result;
 }
 
+std::vector<std::pair<float, float>> LiesWeichenKruemmung(const Zusi& datei) {
+  std::vector<std::pair<float, float>> result;
+  auto dateibeschreibung = datei.Info->Beschreibung;
+  std::replace(dateibeschreibung.begin(), dateibeschreibung.end(), ',', '.');
+
+  auto pos = dateibeschreibung.find('=');
+  float l = 0;
+  float l_neu = l;
+  try {
+    while (pos != std::string::npos) {
+      if ((pos >= 1) && (std::string_view(&dateibeschreibung.at(pos-1), 1) == "l")) {
+        l_neu += std::stof(&dateibeschreibung.at(pos+1), nullptr);
+      } else if ((pos >= 2) && (std::string_view(&dateibeschreibung.at(pos-2), 2) == "kr")) {
+        const float kr = std::stof(&dateibeschreibung.at(pos+1), nullptr);
+        std::cout << " - Lauflaenge " << l << ": kr=" << kr << "/r=" << Radius(kr) << "\n";
+        l = l_neu;
+        result.emplace_back(l, kr);
+      }
+      pos = dateibeschreibung.find('=', pos + 1);
+    }
+  } catch (const std::invalid_argument&) {
+    std::cout << "Fehler beim Lesen der Dateibeschreibung\n";
+    return std::vector<std::pair<float, float>>();
+  }
+
+  return result;
+}
+
 void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen, const std::vector<std::pair<float, float>> kruemmungen) {
   // Annahme: Verbogene Weiche hat mehr Elemente als unverbogene, da beim Verbiegen Streckenelemente geteilt werden.
   assert(verbogen.size() >= unverbogen.size());
@@ -256,8 +286,19 @@ int main(int argc, char* argv[]) {
           std::cout << "Strang 1 in Bogenweiche ist gerader Strang, Strang 2 ist abzweigender Strang\n";
         }
 
-        std::cout << "Berechne Bogenweichen-Parameter aus den Kruemmungsunterschieden des geraden Strangs\n";
-        const auto& krdiffs = BerechneWeichenKruemmung(originalweiche.geraderStrang, bogenweiche.geraderStrang);
+        std::vector<std::pair<float, float>> krdiffs;
+        std::cout << "Lies Bogenweichen-Parameter aus verbogener LS3-Datei " << dateinameErsterSignalframe << "\n";
+        const auto& ls3Verbogen = zusixml::parseFile(zusixml::zusiPfadZuOsPfad(dateinameErsterSignalframe, ""));
+        if (ls3Verbogen) {
+          krdiffs = LiesWeichenKruemmung(*ls3Verbogen);
+        } else {
+          std::cout << "Fehler beim Einlesen\n";
+        }
+
+        if (krdiffs.empty()) {
+          std::cout << "Berechne Bogenweichen-Parameter aus den Kruemmungsunterschieden des geraden Strangs\n";
+          krdiffs = BerechneWeichenKruemmung(originalweiche.geraderStrang, bogenweiche.geraderStrang);
+        }
 
         std::cout << "Wende Bogenweichen-Parameter auf abzweigenden Strang an\n";
         KorrigiereKruemmungAbzweigenderStrang(originalweiche.abzweigenderStrang, bogenweiche.abzweigenderStrang, krdiffs);
