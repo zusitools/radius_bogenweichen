@@ -228,7 +228,10 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
   assert(itKruemmungen != kruemmungen.end());
 
   double lenVerbogen = 0;
-  for (const auto& el : verbogen) {
+  double winkelVorherEndeNeu = 0;
+  for (size_t i = 0, len = verbogen.size(); i < len; ++i) {
+    const auto& el = verbogen[i];
+
     if (std::abs(lenAktElementUnverbogen) < 0.5) {
       ++itUnverbogen;
       assert(itUnverbogen != unverbogen.end());
@@ -242,6 +245,18 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
 
     const auto krNeu = GetKruemmung(*itUnverbogen) + itKruemmungen->second;
     std::cout << " - Lauflaenge " << lenVerbogen << ": verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
+
+    if (i > 0) {
+      const auto& el1 = verbogen[i-1];
+      const auto winkelEl1EndeAlt = GetWinkel(el1, ElementEnde::Ende, el1.first->kr);
+      const auto winkelEl2AnfangAlt = GetWinkel(el, ElementEnde::Anfang, el.first->kr);
+      const auto winkelEl2AnfangNeu = GetWinkel(el, ElementEnde::Anfang, krNeu);
+
+      const auto unstetigkeitAlt = std::abs(winkelEl1EndeAlt - winkelEl2AnfangAlt);
+      const auto unstetigkeitNeu = std::abs(winkelVorherEndeNeu - winkelEl2AnfangNeu);
+      std::cout << "   - Unstetigkeit " << unstetigkeitAlt << " vs. " << unstetigkeitNeu << " -> " << (unstetigkeitNeu/unstetigkeitAlt * 100) << "%\n";
+    }
+    winkelVorherEndeNeu = GetWinkel(el, ElementEnde::Ende, krNeu);
 
     const double l = ElementLaenge(*el.first);
     lenVerbogen += l;
