@@ -172,9 +172,10 @@ double GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, do
     }
     const double radius = 1.0/kr;
     // Element repraesentiert eine Kreissehne im Kreis mit Radius `radius`
-    // Berechne Sehnenwinkel und daraus Winkel der Kreistangente
-    const double sehnenwinkel = 2.0 * asin(ElementLaenge(*elementRichtung.first) / (2.0 * std::abs(radius)));
-    const double tangentenwinkel = sehnenwinkel / 2.0;
+    // Berechne Sehnenwinkel alpha und daraus Winkel der Kreistangente
+    //  alpha = 2 * asin(l / 2 * radius)
+    //  tangentenwinkel = alpha / 2
+    const double tangentenwinkel = asin(ElementLaenge(*elementRichtung.first) / (2.0 * std::abs(radius)));
 
     if ((kr > 0) == (ende == ElementEnde::Anfang)) {
       // Positive Kruemmung: Linksbogen -> erst Ausschlag nach rechts, also gegen Uhrzeigersinn
