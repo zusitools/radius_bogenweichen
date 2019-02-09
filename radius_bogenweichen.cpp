@@ -275,6 +275,18 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
   assert(std::abs(lenAktElementUnverbogen) < 0.5);
 }
 
+// https://stackoverflow.com/a/16994674
+template <typename T>
+T reverseBits(T n)
+{
+    __asm__("BSWAP %0" : "=r"(n) : "0"(n));
+    n >>= ((sizeof(size_t) - sizeof(T)) * CHAR_BIT);
+    n = ((n & 0xaaaaaaaaaaaaaaaaULL) >> 1) | ((n & 0x5555555555555555ULL) << 1);
+    n = ((n & 0xccccccccccccccccULL) >> 2) | ((n & 0x3333333333333333ULL) << 2);
+    n = ((n & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | ((n & 0x0f0f0f0f0f0f0f0fULL) << 4);
+    return n;
+}
+
 int main(int argc, char* argv[]) {
   (void)argc;
   const std::vector<std::pair<std::string, std::string>> OriginalWeichen = GetWeichenMapping();
@@ -347,11 +359,16 @@ int main(int argc, char* argv[]) {
         }
 
         // Herausfinden, welches der abzweigende Strang ist
-        assert(bogenweiche.weichensignal->children_MatrixEintrag.size() == 2);
-        assert(originalweiche.weichensignal->children_MatrixEintrag.size() == 2);
+        const auto& matrixBogenweiche = bogenweiche.weichensignal->children_MatrixEintrag;
+        assert(matrixBogenweiche.size() == 2);
+        const auto& matrixOriginalweiche = originalweiche.weichensignal->children_MatrixEintrag;
+        assert(matrixOriginalweiche.size() == 2);
 
-        if ((bogenweiche.weichensignal->children_MatrixEintrag[0]->Signalbild > bogenweiche.weichensignal->children_MatrixEintrag[1]->Signalbild) !=
-            (originalweiche.weichensignal->children_MatrixEintrag[0]->Signalbild > originalweiche.weichensignal->children_MatrixEintrag[1]->Signalbild)) {
+        // Groessenvergleich mit umgekehrter Bitreihenfolge,
+        // da die Zungen-LS3 standardmaessig am Anfang der Signalframe-Liste stehen
+        // -> niedrigstwertige Bits.
+        if ((reverseBits(matrixBogenweiche[0]->Signalbild) > reverseBits(matrixBogenweiche[1]->Signalbild)) !=
+            (reverseBits(matrixOriginalweiche[0]->Signalbild) > reverseBits(matrixOriginalweiche[1]->Signalbild))) {
           std::swap(bogenweiche.geraderStrang, bogenweiche.abzweigenderStrang);
           std::cout << "Strang 2 in Bogenweiche ist gerader Strang, Strang 1 ist abzweigender Strang\n";
         } else {
