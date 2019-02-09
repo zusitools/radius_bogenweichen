@@ -73,8 +73,13 @@ std::vector<Weiche> FindeWeichen(const Strecke& str, bool nurBogenweichen = fals
       assert(signal->children_SignalFrame.size() > 0);
 
       const auto& signalFrame = signal->children_SignalFrame[0];
+      const auto& dateiname = signalFrame->Datei.Dateiname;
 
-      if (nurBogenweichen && (signalFrame->Datei.Dateiname.find("gebogen") == std::string::npos)) {
+      if (nurBogenweichen && (dateiname.find("gebogen") == std::string::npos)) {
+        continue;
+      }
+
+      if ((dateiname.find("DKW") != std::string::npos) || (dateiname.find("EKW") != std::string::npos)) {
         continue;
       }
 
