@@ -19,6 +19,10 @@ size_t GetAnzahlNachfolger(const ElementUndRichtung& ER) {
   return ER.second ? ER.first->children_NachNorm.size() : ER.first->children_NachGegen.size();
 }
 
+double HundertstelGrad(double rad) {
+  return 100 * (rad * 180.0 / M_PI);
+}
+
 ElementUndRichtung GetNachfolger(const Strecke& str, ElementUndRichtung el, size_t idx) {
   const auto& nachfolgerArray = (el.second ? el.first->children_NachNorm : el.first->children_NachGegen);
   const auto& anschlussMask = (el.second ? 0x1 : 0x100) << idx;
@@ -298,7 +302,7 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
 
       const auto unstetigkeitAlt = std::abs(winkelEl1EndeAlt - winkelEl2AnfangAlt);
       const auto unstetigkeitNeu = std::abs(winkelVorherEndeNeu - winkelEl2AnfangNeu);
-      std::cout << "  > Unstetigkeit " << unstetigkeitAlt << " -> " << unstetigkeitNeu << ": " << (unstetigkeitNeu/unstetigkeitAlt * 100) << "%\n";
+      std::cout << "  > Unstetigkeit " << HundertstelGrad(unstetigkeitAlt) << " -> " << HundertstelGrad(unstetigkeitNeu) << ": " << (unstetigkeitNeu/unstetigkeitAlt * 100) << "%\n";
     }
 
     std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
@@ -330,7 +334,7 @@ int main(int argc, char* argv[]) {
         const auto winkelEl2Anfang = GetWinkel(el2, ElementEnde::Anfang, el2.first->kr);
         // std::cout << ", w1=" << winkelEl1Ende << ", w2=" << winkelEl2Anfang;
         const auto unstetigkeit = std::abs(winkelEl1Ende - winkelEl2Anfang);
-        std::cout << "  > Unstetigkeit " << unstetigkeit << "\n";
+        std::cout << "  > Unstetigkeit " << HundertstelGrad(unstetigkeit) << "\n";
       }
     }
   };
