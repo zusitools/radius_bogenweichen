@@ -15,6 +15,10 @@ double GetKruemmung(const ElementUndRichtung& ER) {
   return ER.second ? ER.first->kr : -ER.first->kr;
 }
 
+size_t GetAnzahlNachfolger(const ElementUndRichtung& ER) {
+  return ER.second ? ER.first->children_NachNorm.size() : ER.first->children_NachGegen.size();
+}
+
 constexpr size_t WEICHE = 1 << 2;
 
 struct Weiche {
@@ -44,7 +48,7 @@ std::vector<Weiche> FindeWeichen(const Strecke& str, bool nurBogenweichen = fals
   const auto folgeWeichenstrang = [&str, &getNachfolger](const ElementUndRichtung& el) -> std::vector<ElementUndRichtung> {
     std::vector<ElementUndRichtung> result;
     ElementUndRichtung cur = el;
-    while (cur.first && (cur.first->Fkt & WEICHE)) {
+    while (cur.first && (GetAnzahlNachfolger(cur) <= 1) && (cur.first->Fkt & WEICHE)) {
       result.push_back(cur);
       cur = getNachfolger(cur, 0);
     }
@@ -254,7 +258,7 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
 
       const auto unstetigkeitAlt = std::abs(winkelEl1EndeAlt - winkelEl2AnfangAlt);
       const auto unstetigkeitNeu = std::abs(winkelVorherEndeNeu - winkelEl2AnfangNeu);
-      std::cout << "   - Unstetigkeit " << unstetigkeitAlt << " vs. " << unstetigkeitNeu << " -> " << (unstetigkeitNeu/unstetigkeitAlt * 100) << "%\n";
+      std::cout << "   - Unstetigkeit " << unstetigkeitAlt << " -> " << unstetigkeitNeu << ": " << (unstetigkeitNeu/unstetigkeitAlt * 100) << "%\n";
     }
     winkelVorherEndeNeu = GetWinkel(el, ElementEnde::Ende, krNeu);
 
