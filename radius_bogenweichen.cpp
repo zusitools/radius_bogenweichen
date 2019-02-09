@@ -243,13 +243,13 @@ std::vector<std::pair<double, double>> BerechneWeichenKruemmung(const std::vecto
   return result;
 }
 
-std::vector<std::pair<double, double>> LiesWeichenKruemmung(const Zusi& datei) {
+std::vector<std::pair<double, double>> LiesWeichenKruemmung(const Zusi& datei, double offset) {
   std::vector<std::pair<double, double>> result;
   auto dateibeschreibung = datei.Info->Beschreibung;
   std::replace(dateibeschreibung.begin(), dateibeschreibung.end(), ',', '.');
 
   auto pos = dateibeschreibung.find('=');
-  double l = 0;
+  double l = -offset;
   double l_neu = l;
   try {
     while (pos != std::string::npos) {
@@ -259,7 +259,9 @@ std::vector<std::pair<double, double>> LiesWeichenKruemmung(const Zusi& datei) {
         const double kr = std::stof(&dateibeschreibung.at(pos+1), nullptr);
         std::cout << " - Lauflaenge " << l << ": kr=" << kr << "/r=" << Radius(kr) << "\n";
         l = l_neu;
-        result.emplace_back(l, kr);
+        if (l >= 0) {
+          result.emplace_back(l, kr);
+        }
       }
       pos = dateibeschreibung.find('=', pos + 1);
     }
@@ -408,7 +410,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Lies Bogenweichen-Parameter aus verbogener LS3-Datei " << dateinameErsterSignalframe << "\n";
         const auto& ls3Verbogen = zusixml::parseFile(zusixml::zusiPfadZuOsPfad(dateinameErsterSignalframe, ""));
         if (ls3Verbogen) {
-          krdiffs = LiesWeichenKruemmung(*ls3Verbogen);
+          krdiffs = LiesWeichenKruemmung(*ls3Verbogen, ElementLaenge(*originalweiche.startElement.first));  // Laenge des Verzweigungselements soll nicht in Lauflaenge enthalten sein
         } else {
           std::cout << "Fehler beim Einlesen\n";
         }
