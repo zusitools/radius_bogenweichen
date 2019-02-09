@@ -19,6 +19,20 @@ size_t GetAnzahlNachfolger(const ElementUndRichtung& ER) {
   return ER.second ? ER.first->children_NachNorm.size() : ER.first->children_NachGegen.size();
 }
 
+ElementUndRichtung GetNachfolger(const Strecke& str, ElementUndRichtung el, size_t idx) {
+  const auto& nachfolgerArray = (el.second ? el.first->children_NachNorm : el.first->children_NachGegen);
+  const auto& anschlussMask = (el.second ? 0x1 : 0x100) << idx;
+
+  if (idx >= nachfolgerArray.size()) {
+    return { nullptr, false };
+  }
+  const auto& nachfolgerNr = nachfolgerArray[idx].Nr;
+  if (nachfolgerNr < 0 || static_cast<size_t>(nachfolgerNr) >= str.children_StrElement.size() || !str.children_StrElement[nachfolgerNr]) {
+    return { nullptr, false };
+  }
+  return { str.children_StrElement[nachfolgerNr].get(), (el.first->Anschluss & anschlussMask) == 0 };
+}
+
 constexpr size_t WEICHE = 1 << 2;
 
 struct Weiche {
@@ -31,20 +45,9 @@ struct Weiche {
 std::vector<Weiche> FindeWeichen(const Strecke& str, bool nurBogenweichen = false) {
   std::vector<Weiche> result;
 
-  const auto getNachfolger = [&str](ElementUndRichtung el, size_t idx) -> ElementUndRichtung {
-    const auto& nachfolgerArray = (el.second ? el.first->children_NachNorm : el.first->children_NachGegen);
-    const auto& anschlussMask = (el.second ? 0x1 : 0x100) << idx;
-
-    if (idx >= nachfolgerArray.size()) {
-      return { nullptr, false };
-    }
-    const auto& nachfolgerNr = nachfolgerArray[idx].Nr;
-    if (nachfolgerNr < 0 || static_cast<size_t>(nachfolgerNr) >= str.children_StrElement.size() || !str.children_StrElement[nachfolgerNr]) {
-      return { nullptr, false };
-    }
-    return { str.children_StrElement[nachfolgerNr].get(), (el.first->Anschluss & anschlussMask) == 0 };
+  const auto getNachfolger = [&str](const ElementUndRichtung& el, size_t idx) {
+    return GetNachfolger(str, el, idx);
   };
-
   const auto folgeWeichenstrang = [&str, &getNachfolger](const ElementUndRichtung& el) -> std::vector<ElementUndRichtung> {
     std::vector<ElementUndRichtung> result;
     ElementUndRichtung cur = el;
@@ -144,9 +147,23 @@ enum class ElementEnde {
   Anfang, Ende
 };
 
+const Vec3& GetElementEnde(const ElementUndRichtung& elementRichtung, ElementEnde ende) {
+  return (elementRichtung.second == (ende == ElementEnde::Anfang)) ? elementRichtung.first->g : elementRichtung.first->b;
+}
+
+double NormalisiereWinkel(double rad) {
+  if (rad > M_PI) {
+    return M_2_PI - rad;
+  } else if (rad < -M_PI) {
+    return rad + M_2_PI;
+  } else {
+    return rad;
+  }
+}
+
 double GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, double kr /* in Normrichtung */) {
-  const auto& p1 = elementRichtung.second ? elementRichtung.first->g : elementRichtung.first->b;
-  const auto& p2 = elementRichtung.second ? elementRichtung.first->b : elementRichtung.first->g;
+  const auto& p1 = GetElementEnde(elementRichtung, ElementEnde::Anfang);
+  const auto& p2 = GetElementEnde(elementRichtung, ElementEnde::Ende);
   double result = atan2(p2.Y - p1.Y, p2.X - p1.X);  // Winkel ohne Kruemmung
 
   if (std::abs(kr) >= 1/100000.0) {
@@ -167,13 +184,7 @@ double GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, do
     }
   }
 
-  if (result > M_PI) {
-    result = M_2_PI - result;
-  } else if (result < -M_PI) {
-    result += M_2_PI;
-  }
-
-  return result;
+  return NormalisiereWinkel(result);
 }
 
 std::vector<std::pair<double, double>> BerechneWeichenKruemmung(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen) {
@@ -286,18 +297,6 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
   assert(std::abs(lenAktElementUnverbogen) < 0.5);
 }
 
-// https://stackoverflow.com/a/16994674
-template <typename T>
-T reverseBits(T n)
-{
-    __asm__("BSWAP %0" : "=r"(n) : "0"(n));
-    n >>= ((sizeof(size_t) - sizeof(T)) * CHAR_BIT);
-    n = ((n & 0xaaaaaaaaaaaaaaaaULL) >> 1) | ((n & 0x5555555555555555ULL) << 1);
-    n = ((n & 0xccccccccccccccccULL) >> 2) | ((n & 0x3333333333333333ULL) << 2);
-    n = ((n & 0xf0f0f0f0f0f0f0f0ULL) >> 4) | ((n & 0x0f0f0f0f0f0f0f0fULL) << 4);
-    return n;
-}
-
 int main(int argc, char* argv[]) {
   (void)argc;
   const std::vector<std::pair<std::string, std::string>> OriginalWeichen = GetWeichenMapping();
@@ -356,6 +355,7 @@ int main(int argc, char* argv[]) {
           continue;
         }
         const auto& originalweiche = originaldateiWeichen[0];
+        // Annahme: Erster Nachfolger der Originalweiche ist gerader Strang
         std::cout << "Elemente im geraden Strang:\n";
         printElemente(originalweiche.geraderStrang);
         std::cout << "Elemente im abzweigenden Strang:\n";
@@ -369,25 +369,27 @@ int main(int argc, char* argv[]) {
           continue;
         }
 
-        // Herausfinden, welches der abzweigende Strang ist
-        const auto& matrixBogenweiche = bogenweiche.weichensignal->children_MatrixEintrag;
-        if (matrixBogenweiche.size() != 2) {
-          std::cout << "!! Kann abzweigenden Strang nicht bestimmen: Signal der Bogenweiche hat nicht genau 2 Matrixeintraege\n";
-          result = 1;
-          continue;
-        }
-        const auto& matrixOriginalweiche = originalweiche.weichensignal->children_MatrixEintrag;
-        if (matrixOriginalweiche.size() != 2) {
-          std::cout << "!! Kann abzweigenden Strang nicht bestimmen: Signal der Originalweiche hat nicht genau 2 Matrixeintraege\n";
-          result = 1;
-          continue;
-        }
+        // Herausfinden, welches der abzweigende Strang in der verbogenen Weiche ist
+        // (die Vorzugslage koennte geaendert worden sein)
+        // -> Vergleiche die Vorzeichen der Winkel (Ende gerader Strang) - (Startelement) - (Ende abzweigender Strang)
+        // fuer Original und Bogenweiche (beim Biegen wird die relative Lage der Streckenelemente zueinander nicht veraendert).
+        const auto& bogenweicheScheitel = GetElementEnde(bogenweiche.startElement, ElementEnde::Anfang);
+        const auto& bogenweicheP1 = GetElementEnde(bogenweiche.geraderStrang.back(), ElementEnde::Ende);
+        const auto& bogenweicheP2 = GetElementEnde(bogenweiche.abzweigenderStrang.back(), ElementEnde::Ende);
 
-        // Groessenvergleich mit umgekehrter Bitreihenfolge,
-        // da die Zungen-LS3 standardmaessig am Anfang der Signalframe-Liste stehen
-        // -> niedrigstwertige Bits.
-        if ((reverseBits(matrixBogenweiche[0]->Signalbild) > reverseBits(matrixBogenweiche[1]->Signalbild)) !=
-            (reverseBits(matrixOriginalweiche[0]->Signalbild) > reverseBits(matrixOriginalweiche[1]->Signalbild))) {
+        const auto& originalweicheScheitel = GetElementEnde(originalweiche.startElement, ElementEnde::Anfang);
+        const auto& originalweicheP1 = GetElementEnde(originalweiche.geraderStrang.back(), ElementEnde::Ende);
+        const auto& originalweicheP2 = GetElementEnde(originalweiche.abzweigenderStrang.back(), ElementEnde::Ende);
+
+        const auto winkelBogenweicheP1 = atan2(bogenweicheP1.Y - bogenweicheScheitel.Y, bogenweicheP1.X - bogenweicheScheitel.X);
+        const auto winkelBogenweicheP2 = atan2(bogenweicheP2.Y - bogenweicheScheitel.Y, bogenweicheP2.X - bogenweicheScheitel.X);
+        const auto winkelDiffBogenweiche = NormalisiereWinkel(winkelBogenweicheP2 - winkelBogenweicheP1);
+
+        const auto winkelOriginalweicheP1 = atan2(originalweicheP1.Y - originalweicheScheitel.Y, originalweicheP1.X - originalweicheScheitel.X);
+        const auto winkelOriginalweicheP2 = atan2(originalweicheP2.Y - originalweicheScheitel.Y, originalweicheP2.X - originalweicheScheitel.X);
+        const auto winkelDiffOriginalweiche = NormalisiereWinkel(winkelOriginalweicheP2 - winkelOriginalweicheP1);
+
+        if ((winkelDiffBogenweiche > 0) != (winkelDiffOriginalweiche > 0)) {
           std::swap(bogenweiche.geraderStrang, bogenweiche.abzweigenderStrang);
           std::cout << "Strang 2 in Bogenweiche ist gerader Strang, Strang 1 ist abzweigender Strang\n";
         } else {
