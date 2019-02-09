@@ -187,34 +187,57 @@ double GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, do
   return NormalisiereWinkel(result);
 }
 
-std::vector<std::pair<double, double>> BerechneWeichenKruemmung(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen) {
-  std::vector<std::pair<double, double>> result;
+// Gibt einen Vektor mit derselben Laenge wie `vec` zurueck,
+// in dessen i-tem Element der Index des zum i-ten Element aus `vec` zugehoerigen Elementes aus `referenz` steht.
+// (Zuordnung erfolgt ueber die Elementlaengen)
+std::vector<size_t> BerechneElementZuordnung(const std::vector<ElementUndRichtung>& vec, const std::vector<ElementUndRichtung>& referenz) {
+  std::vector<size_t> result;
+  result.reserve(vec.size());
+  auto itReferenz = referenz.begin();
 
-  // Annahme: Verbogene Weiche hat mehr Elemente als unverbogene, da beim Verbiegen Streckenelemente geteilt werden.
-  assert(verbogen.size() >= unverbogen.size());
+  constexpr double epsilon = 0.3;  // Erlaubte Laengenabweichung zwischen Original- und verbogenem Element
 
-  auto itUnverbogen = unverbogen.begin();
-  assert(itUnverbogen != unverbogen.end());
-  double lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
+  double ldiff = -ElementLaenge(*itReferenz->first);  // Lauflaenge vec - Lauflaenge referenz
+  for (size_t i = 0, len = vec.size(); i < len; ++i) {
+    const auto& el = vec[i];
 
-  double lenVerbogen = 0;
-  for (const auto& el : verbogen) {
-    if (std::abs(lenAktElementUnverbogen) < 0.5) {
-      ++itUnverbogen;
-      assert(itUnverbogen != unverbogen.end());
-      lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
+    assert(itReferenz != referenz.end());
+    result.push_back(itReferenz - referenz.begin());
+
+    ldiff += ElementLaenge(*el.first);
+    if (std::abs(ldiff) <= epsilon) {
+      ldiff = 0;
     }
 
-    const auto krdiff = GetKruemmung(el) - GetKruemmung(*itUnverbogen);
-    std::cout << " - Lauflaenge " << lenVerbogen << ": verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff=" << krdiff << "/Biegeradius=" << Radius(krdiff) << "\n";
-    result.emplace_back(lenVerbogen, krdiff);
-
-    const double l = ElementLaenge(*el.first);
-    lenVerbogen += l;
-    lenAktElementUnverbogen -= l;
+    if (i < len - 1) {
+      while (ldiff > -epsilon) {
+        ++itReferenz;
+        assert(itReferenz != referenz.end());
+        ldiff -= ElementLaenge(*itReferenz->first);
+      }
+    }
   }
 
-  assert(std::abs(lenAktElementUnverbogen) < 0.5);
+  assert(ldiff > -epsilon);
+
+  return result;
+}
+
+std::vector<std::pair<double, double>> BerechneWeichenKruemmung(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen) {
+  std::vector<std::pair<double, double>> result;
+  result.reserve(verbogen.size());
+
+  const auto& zuordnung = BerechneElementZuordnung(verbogen, unverbogen);
+  double lauflaenge = 0;
+  for (size_t i = 0, len = verbogen.size(); i < len; ++i) {
+    const auto& el = verbogen[i];
+    const auto& elUnverbogen = unverbogen[zuordnung[i]];
+    const auto krdiff = GetKruemmung(el) - GetKruemmung(elUnverbogen);
+    std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff=" << krdiff << "/Biegeradius=" << Radius(krdiff) << "\n";
+    result.emplace_back(lauflaenge, krdiff);
+
+    lauflaenge += ElementLaenge(*el.first);
+  }
 
   return result;
 }
@@ -248,34 +271,22 @@ std::vector<std::pair<double, double>> LiesWeichenKruemmung(const Zusi& datei) {
 }
 
 void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen, const std::vector<std::pair<double, double>> kruemmungen) {
-  // Annahme: Verbogene Weiche hat mehr Elemente als unverbogene, da beim Verbiegen Streckenelemente geteilt werden.
-  assert(verbogen.size() >= unverbogen.size());
-
-  auto itUnverbogen = unverbogen.begin();
-  assert(itUnverbogen != unverbogen.end());
-  double lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
-
+  const auto& zuordnung = BerechneElementZuordnung(verbogen, unverbogen);
   auto itKruemmungen = kruemmungen.begin();
   assert(itKruemmungen != kruemmungen.end());
-
-  double lenVerbogen = 0;
+  double lauflaenge = 0;
   double winkelVorherEndeNeu = 0;
   for (size_t i = 0, len = verbogen.size(); i < len; ++i) {
     const auto& el = verbogen[i];
+    const auto& elUnverbogen = unverbogen[zuordnung[i]];
 
-    if (std::abs(lenAktElementUnverbogen) < 0.5) {
-      ++itUnverbogen;
-      assert(itUnverbogen != unverbogen.end());
-      lenAktElementUnverbogen = ElementLaenge(*itUnverbogen->first);
-    }
-
-    while (lenVerbogen > itKruemmungen->first + 2.5) {
+    while (lauflaenge > itKruemmungen->first + 2.5) {
       ++itKruemmungen;
       assert(itKruemmungen != kruemmungen.end());
     }
 
-    const auto krNeu = GetKruemmung(*itUnverbogen) + itKruemmungen->second;
-    std::cout << " - Lauflaenge " << lenVerbogen << ": verbogen " << el.first->Nr << " -> unverbogen " << itUnverbogen->first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
+    const auto krNeu = GetKruemmung(elUnverbogen) + itKruemmungen->second;
+    std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
 
     if (i > 0) {
       const auto& el1 = verbogen[i-1];
@@ -289,12 +300,8 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
     }
     winkelVorherEndeNeu = GetWinkel(el, ElementEnde::Ende, krNeu);
 
-    const double l = ElementLaenge(*el.first);
-    lenVerbogen += l;
-    lenAktElementUnverbogen -= l;
+    lauflaenge += ElementLaenge(*el.first);
   }
-
-  assert(std::abs(lenAktElementUnverbogen) < 0.5);
 }
 
 int main(int argc, char* argv[]) {
