@@ -300,9 +300,9 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
       const auto winkelEl2AnfangAlt = GetWinkel(el, ElementEnde::Anfang, el.first->kr);
       const auto winkelEl2AnfangNeu = GetWinkel(el, ElementEnde::Anfang, krNeu);
 
-      const auto unstetigkeitAlt = std::abs(winkelEl1EndeAlt - winkelEl2AnfangAlt);
-      const auto unstetigkeitNeu = std::abs(winkelVorherEndeNeu - winkelEl2AnfangNeu);
-      std::cout << "  > Unstetigkeit " << HundertstelGrad(unstetigkeitAlt) << " -> " << HundertstelGrad(unstetigkeitNeu) << ": " << (unstetigkeitNeu/unstetigkeitAlt * 100) << "%\n";
+      const auto knickAlt = std::abs(winkelEl1EndeAlt - winkelEl2AnfangAlt);
+      const auto knickNeu = std::abs(winkelVorherEndeNeu - winkelEl2AnfangNeu);
+      std::cout << "  > Knick " << HundertstelGrad(knickAlt) << " -> " << HundertstelGrad(knickNeu) << ": " << (knickNeu/knickAlt * 100) << "%\n";
     }
 
     std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
@@ -333,8 +333,8 @@ int main(int argc, char* argv[]) {
         const auto winkelEl1Ende = GetWinkel(el, ElementEnde::Ende, el.first->kr);
         const auto winkelEl2Anfang = GetWinkel(el2, ElementEnde::Anfang, el2.first->kr);
         // std::cout << ", w1=" << winkelEl1Ende << ", w2=" << winkelEl2Anfang;
-        const auto unstetigkeit = std::abs(winkelEl1Ende - winkelEl2Anfang);
-        std::cout << "  > Unstetigkeit " << HundertstelGrad(unstetigkeit) << "\n";
+        const auto knick = std::abs(winkelEl1Ende - winkelEl2Anfang);
+        std::cout << "  > Knick " << HundertstelGrad(knick) << "\n";
       }
     }
   };
