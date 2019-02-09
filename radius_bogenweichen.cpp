@@ -289,7 +289,6 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
     }
 
     const auto krNeu = GetKruemmung(elUnverbogen) + itKruemmungen->second;
-    std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
 
     if (i > 0) {
       const auto& el1 = verbogen[i-1];
@@ -299,8 +298,11 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
 
       const auto unstetigkeitAlt = std::abs(winkelEl1EndeAlt - winkelEl2AnfangAlt);
       const auto unstetigkeitNeu = std::abs(winkelVorherEndeNeu - winkelEl2AnfangNeu);
-      std::cout << "   - Unstetigkeit " << unstetigkeitAlt << " -> " << unstetigkeitNeu << ": " << (unstetigkeitNeu/unstetigkeitAlt * 100) << "%\n";
+      std::cout << "  > Unstetigkeit " << unstetigkeitAlt << " -> " << unstetigkeitNeu << ": " << (unstetigkeitNeu/unstetigkeitAlt * 100) << "%\n";
     }
+
+    std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
+
     winkelVorherEndeNeu = GetWinkel(el, ElementEnde::Ende, krNeu);
 
     lauflaenge += ElementLaenge(*el.first);
@@ -321,16 +323,15 @@ int main(int argc, char* argv[]) {
     for (size_t i = 0, len = elemente.size(); i < len; ++i) {
       const auto& el = elemente[i];
       const auto kr = GetKruemmung(el);
-      std::cout << " - " << el.first->Nr << ",l=" << ElementLaenge(*el.first) << ", kr=" << kr << "/r=" << Radius(kr);
+      std::cout << " - " << el.first->Nr << ",l=" << ElementLaenge(*el.first) << ", kr=" << kr << "/r=" << Radius(kr) << "\n";
       if (i < len - 1) {
         const auto& el2 = elemente[i+1];
         const auto winkelEl1Ende = GetWinkel(el, ElementEnde::Ende, el.first->kr);
         const auto winkelEl2Anfang = GetWinkel(el2, ElementEnde::Anfang, el2.first->kr);
         // std::cout << ", w1=" << winkelEl1Ende << ", w2=" << winkelEl2Anfang;
         const auto unstetigkeit = std::abs(winkelEl1Ende - winkelEl2Anfang);
-        std::cout << ", Unstetigkeit " << unstetigkeit;
+        std::cout << "  > Unstetigkeit " << unstetigkeit << "\n";
       }
-      std::cout << "\n";
     }
   };
 
