@@ -66,11 +66,20 @@ std::vector<Weiche> FindeWeichen(const Strecke& str, bool nurBogenweichen = fals
       const bool norm = (str_element->children_NachNorm.size() == 2);
 
       const auto& richtungsInfo = (norm ? str_element->InfoNormRichtung : str_element->InfoGegenRichtung);
-      assert(richtungsInfo.has_value());
+      if (!richtungsInfo.has_value()) {
+        std::cout << "!! Element " << str_element->Nr << " hat mehr als einen Nachfolger, aber enthaelt keine Richtungsinformation\n";
+        continue;
+      }
 
       const auto& signal = richtungsInfo->Signal;
-      assert(signal);
-      assert(signal->children_SignalFrame.size() > 0);
+      if (!signal) {
+        std::cout << "!! Element " << str_element->Nr << " hat mehr als einen Nachfolger, aber enthaelt kein Signal\n";
+        continue;
+      }
+      if (signal->children_SignalFrame.empty()) {
+        std::cout << "!! Element " << str_element->Nr << " hat mehr als einen Nachfolger, aber das Signal enthaelt keine Signalframes\n";
+        continue;
+      }
 
       const auto& signalFrame = signal->children_SignalFrame[0];
       const auto& dateiname = signalFrame->Datei.Dateiname;
@@ -360,9 +369,17 @@ int main(int argc, char* argv[]) {
 
         // Herausfinden, welches der abzweigende Strang ist
         const auto& matrixBogenweiche = bogenweiche.weichensignal->children_MatrixEintrag;
-        assert(matrixBogenweiche.size() == 2);
+        if (matrixBogenweiche.size() != 2) {
+          std::cout << "!! Kann abzweigenden Strang nicht bestimmen: Signal der Bogenweiche hat nicht genau 2 Matrixeintraege\n";
+          result = 1;
+          continue;
+        }
         const auto& matrixOriginalweiche = originalweiche.weichensignal->children_MatrixEintrag;
-        assert(matrixOriginalweiche.size() == 2);
+        if (matrixOriginalweiche.size() != 2) {
+          std::cout << "!! Kann abzweigenden Strang nicht bestimmen: Signal der Originalweiche hat nicht genau 2 Matrixeintraege\n";
+          result = 1;
+          continue;
+        }
 
         // Groessenvergleich mit umgekehrter Bitreihenfolge,
         // da die Zungen-LS3 standardmaessig am Anfang der Signalframe-Liste stehen
