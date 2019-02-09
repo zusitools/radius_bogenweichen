@@ -88,7 +88,9 @@ std::vector<Weiche> FindeWeichen(const Strecke& str, bool nurBogenweichen = fals
         continue;
       }
 
-      if ((dateiname.find("DKW") != std::string::npos) || (dateiname.find("EKW") != std::string::npos)) {
+      if ((dateiname.find("DKW") != std::string::npos)
+          || (dateiname.find("EKW") != std::string::npos)
+          || (dateiname.find("WA-WM") != std::string::npos)) {
         continue;
       }
 
