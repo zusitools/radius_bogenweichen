@@ -137,10 +137,7 @@ std::vector<std::pair<std::string, std::string>> GetWeichenMapping() {
 }
 
 double ElementLaenge(const StrElement& el) {
-  const auto& xdiff = el.b.X - el.g.X;
-  const auto& ydiff = el.b.Y - el.g.Y;
-  const auto& zdiff = el.b.Z - el.g.Z;
-  return sqrt(xdiff*xdiff + ydiff*ydiff + zdiff*zdiff);
+  return std::hypot(el.b.X - el.g.X, el.b.Y - el.g.Y, el.b.Z - el.g.Z);
 }
 
 double Radius(double kr) {
