@@ -1,13 +1,15 @@
 #include "zusi_parser/zusi_types.hpp"
 #include "zusi_parser/utils.hpp"
 
-#define _USE_MATH_DEFINES
 #include <cmath>
 #include <iostream>
 #include <limits>
 #include <string>
 #include <string_view>
 #include <vector>
+
+#include "rapidxml-1.13/rapidxml.hpp"
+#include "rapidxml-1.13/rapidxml_print.hpp"
 
 using ElementUndRichtung = std::pair<const StrElement*, bool>;
 
@@ -274,7 +276,9 @@ std::vector<std::pair<double, double>> LiesWeichenKruemmung(const Zusi& datei, d
   return result;
 }
 
-void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen, const std::vector<std::pair<double, double>> kruemmungen) {
+std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen, const std::vector<std::pair<double, double>> kruemmungen) {
+  std::unordered_map<std::size_t, double> result;
+
   const auto& zuordnung = BerechneElementZuordnung(verbogen, unverbogen);
   auto itKruemmungen = kruemmungen.begin();
   assert(itKruemmungen != kruemmungen.end());
@@ -303,11 +307,57 @@ void KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>
     }
 
     std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
+    result.emplace(el.first->Nr, krNeu);
 
     winkelVorherEndeNeu = GetWinkel(el, ElementEnde::Ende, krNeu);
 
     lauflaenge += ElementLaenge(*el.first);
   }
+
+  return result;
+}
+
+void SchreibeNeueKruemmungen(const char* dateiname, const std::unordered_map<size_t, double> kruemmungenNeu) {
+  zusixml::FileReader reader(dateiname);
+  rapidxml::xml_document<> doc;
+  doc.parse<rapidxml::parse_non_destructive>(const_cast<char*>(reader.data()));
+
+  auto* const zusi_node = doc.first_node("Zusi");
+  auto* const strecke_node = zusi_node->first_node("Strecke");
+
+  // Neue Register und Registerverknuepfungen
+  for (auto* str_element_node = strecke_node->first_node("StrElement"); str_element_node; str_element_node = str_element_node->next_sibling("StrElement")) {
+    const auto* const nr_attrib = str_element_node->first_attribute("Nr");
+    if (!nr_attrib) {
+      continue;
+    }
+
+    const std::string s { nr_attrib->value(), nr_attrib->value_size() };
+    int nr = atoi(s.c_str());
+
+    const auto& it = kruemmungenNeu.find(nr);
+    if (it == kruemmungenNeu.end()) {
+      continue;
+    }
+
+    auto val_as_string = std::to_string(it->second);
+    auto* newval = doc.allocate_string(val_as_string.c_str());
+
+    rapidxml::xml_attribute<>* kr_attrib = str_element_node->first_attribute("kr");
+    if (kr_attrib) {
+      kr_attrib->value(newval);
+    } else {
+      str_element_node->append_attribute(doc.allocate_attribute("kr", newval));
+    }
+  }
+
+  std::string out_string;
+  rapidxml::print(std::back_inserter(out_string), doc, rapidxml::print_no_indenting);
+
+  std::string dateiname_neu = std::string(dateiname) + ".new.st3";
+  std::ofstream o(dateiname_neu, std::ios::binary);
+  o << out_string;
+  std::cout << "Neue ST3-Datei geschrieben: " << dateiname_neu << "\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -337,6 +387,7 @@ int main(int argc, char* argv[]) {
   };
 
   int result = 0;
+  std::unordered_map<std::size_t, double> kruemmungenNeu;
   for (auto& bogenweiche : FindeWeichen(*zusi->Strecke, true)) {  // non-const wg. std::swap(geraderStrang, abzweigenderStrang)
     std::cout << "\nBogenweiche gefunden an Element " << bogenweiche.startElement.first->Nr << "\n";
     std::cout << "Erster Signalframe:\n";
@@ -423,7 +474,7 @@ int main(int argc, char* argv[]) {
         }
 
         std::cout << "Wende Bogenweichen-Parameter auf abzweigenden Strang an\n";
-        KorrigiereKruemmungAbzweigenderStrang(originalweiche.abzweigenderStrang, bogenweiche.abzweigenderStrang, krdiffs);
+        kruemmungenNeu.merge(KorrigiereKruemmungAbzweigenderStrang(originalweiche.abzweigenderStrang, bogenweiche.abzweigenderStrang, krdiffs));
 
         found = true;
         break;
@@ -435,5 +486,10 @@ int main(int argc, char* argv[]) {
       result = 1;
     }
   }
+
+#if 0
+  SchreibeNeueKruemmungen(argv[1], kruemmungenNeu);
+#endif
+
   return result;
 }
