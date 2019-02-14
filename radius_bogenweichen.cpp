@@ -287,7 +287,7 @@ std::vector<std::pair<double, double>> LiesWeichenKruemmung(const Zusi& datei, d
   return result;
 }
 
-std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen, const std::vector<std::pair<double, double>> kruemmungen) {
+std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(const ElementUndRichtung& startElement, const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen, const std::vector<std::pair<double, double>> kruemmungen) {
   std::unordered_map<std::size_t, double> result;
 
   const auto& zuordnung = BerechneElementZuordnung(verbogen, unverbogen);
@@ -306,16 +306,14 @@ std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(co
 
     const auto krNeu = GetKruemmung(elUnverbogen) + itKruemmungen->second;
 
-    if (i > 0) {
-      const auto& el1 = verbogen[i-1];
-      const auto winkelEl1EndeAlt = GetWinkel(el1, ElementEnde::Ende, el1.first->kr);
-      const auto winkelEl2AnfangAlt = GetWinkel(el, ElementEnde::Anfang, el.first->kr);
-      const auto winkelEl2AnfangNeu = GetWinkel(el, ElementEnde::Anfang, krNeu);
+    const auto& el1 = (i == 0 ? startElement : verbogen[i-1]);
+    const auto winkelEl1EndeAlt = GetWinkel(el1, ElementEnde::Ende, el1.first->kr);
+    const auto winkelEl2AnfangAlt = GetWinkel(el, ElementEnde::Anfang, el.first->kr);
+    const auto winkelEl2AnfangNeu = GetWinkel(el, ElementEnde::Anfang, krNeu);
 
-      const auto knickAlt = std::abs(winkelEl1EndeAlt - winkelEl2AnfangAlt);
-      const auto knickNeu = std::abs(winkelVorherEndeNeu - winkelEl2AnfangNeu);
-      std::cout << "  > Knick " << HundertstelGrad(knickAlt) << " -> " << HundertstelGrad(knickNeu) << ": " << (knickNeu/knickAlt * 100) << "%\n";
-    }
+    const auto knickAlt = std::abs(winkelEl1EndeAlt - winkelEl2AnfangAlt);
+    const auto knickNeu = std::abs(winkelVorherEndeNeu - winkelEl2AnfangNeu);
+    std::cout << "  > Knick " << HundertstelGrad(knickAlt) << " -> " << HundertstelGrad(knickNeu) << ": " << (knickNeu/knickAlt * 100) << "%\n";
 
     std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
     result.emplace(el.first->Nr, krNeu);
@@ -381,13 +379,17 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  const auto& printElemente = [](const std::vector<ElementUndRichtung>& elemente) {
-    for (size_t i = 0, len = elemente.size(); i < len; ++i) {
-      const auto& el = elemente[i];
+  const auto& printElemente = [](const ElementUndRichtung& startElement, const std::vector<ElementUndRichtung>& elemente) {
+    for (size_t i = 0, len = elemente.size() + 1; i < len; ++i) {
+      const auto& el = (i == 0 ? startElement : elemente[i - 1]);
       const auto kr = GetKruemmung(el);
-      std::cout << " - " << el.first->Nr << ",l=" << ElementLaenge(*el.first) << ", kr=" << kr << "/r=" << Radius(kr) << "\n";
+      std::cout << " - " << el.first->Nr << ",l=" << ElementLaenge(*el.first) << ", kr=" << kr << "/r=" << Radius(kr);
+      if (i == 0) {
+        std::cout << " (Verzweigungselement)";
+      }
+      std::cout << "\n";
       if (i < len - 1) {
-        const auto& el2 = elemente[i+1];
+        const auto& el2 = elemente[i];
         const auto winkelEl1Ende = GetWinkel(el, ElementEnde::Ende, el.first->kr);
         const auto winkelEl2Anfang = GetWinkel(el2, ElementEnde::Anfang, el2.first->kr);
         // std::cout << ", w1=" << winkelEl1Ende << ", w2=" << winkelEl2Anfang;
@@ -406,9 +408,9 @@ int main(int argc, char* argv[]) {
     std::cout << " - " << dateinameErsterSignalframe << "\n";
 
     std::cout << "Elemente in Strang 1:\n";
-    printElemente(bogenweiche.geraderStrang);
+    printElemente(bogenweiche.startElement, bogenweiche.geraderStrang);
     std::cout << "Elemente in Strang 2:\n";
-    printElemente(bogenweiche.abzweigenderStrang);
+    printElemente(bogenweiche.startElement, bogenweiche.abzweigenderStrang);
 
     // Originaldatei herausfinden
     bool found = false;
@@ -431,9 +433,9 @@ int main(int argc, char* argv[]) {
         const auto& originalweiche = originaldateiWeichen[0];
         // Annahme: Erster Nachfolger der Originalweiche ist gerader Strang
         std::cout << "Elemente im geraden Strang:\n";
-        printElemente(originalweiche.geraderStrang);
+        printElemente(originalweiche.startElement, originalweiche.geraderStrang);
         std::cout << "Elemente im abzweigenden Strang:\n";
-        printElemente(originalweiche.abzweigenderStrang);
+        printElemente(originalweiche.startElement, originalweiche.abzweigenderStrang);
 
         if (!std::all_of(originalweiche.geraderStrang.begin(), originalweiche.geraderStrang.end(), [](const auto& elementRichtung) {
               return std::abs(elementRichtung.first->kr) < 0.00001f;
@@ -485,7 +487,7 @@ int main(int argc, char* argv[]) {
         }
 
         std::cout << "Wende Bogenweichen-Parameter auf abzweigenden Strang an\n";
-        kruemmungenNeu.merge(KorrigiereKruemmungAbzweigenderStrang(originalweiche.abzweigenderStrang, bogenweiche.abzweigenderStrang, krdiffs));
+        kruemmungenNeu.merge(KorrigiereKruemmungAbzweigenderStrang(bogenweiche.startElement, originalweiche.abzweigenderStrang, bogenweiche.abzweigenderStrang, krdiffs));
 
         found = true;
         break;
