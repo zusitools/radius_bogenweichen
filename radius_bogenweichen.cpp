@@ -132,7 +132,18 @@ std::vector<std::pair<std::string, std::string>> GetWeichenMapping() {
     std::string pattern = line.substr(0, semicolonPos);
     std::string datei = line.substr(semicolonPos + 1);
     std::cout << pattern << " -> " << datei << "\n";
-    result.emplace_back(std::move(pattern), std::move(datei));
+    result.emplace_back(pattern, datei);
+
+    // Neueste z3strbie.dll entfernt Leerzeichen im Dateinamen
+    auto pos = pattern.find(' ');
+    if (pos != std::string::npos) {
+      while (pos != std::string::npos) {
+        pattern.erase(pos, 1);
+        pos = pattern.find(' ');
+      }
+      std::cout << pattern << " -> " << datei << "\n";
+      result.emplace_back(std::move(pattern), std::move(datei));
+    }
   };
 
   return result;
