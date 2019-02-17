@@ -242,7 +242,7 @@ std::vector<size_t> BerechneElementZuordnung(const std::vector<ElementUndRichtun
   return result;
 }
 
-std::vector<std::pair<double, double>> BerechneWeichenKruemmung(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen) {
+std::vector<std::pair<double, double>> BerechneBiegeparameter(const std::vector<ElementUndRichtung>& unverbogen, const std::vector<ElementUndRichtung>& verbogen) {
   std::vector<std::pair<double, double>> result;
   result.reserve(verbogen.size());
 
@@ -261,7 +261,7 @@ std::vector<std::pair<double, double>> BerechneWeichenKruemmung(const std::vecto
   return result;
 }
 
-std::vector<std::pair<double, double>> LiesWeichenKruemmung(const Zusi& datei, double offset) {
+std::vector<std::pair<double, double>> LiesBiegeparameter(const Zusi& datei, double offset) {
   std::vector<std::pair<double, double>> result;
   auto dateibeschreibung = datei.Info->Beschreibung;
   std::replace(dateibeschreibung.begin(), dateibeschreibung.end(), ',', '.');
@@ -296,24 +296,24 @@ std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(
     const ElementUndRichtung& startElementVerbogen,
     const std::vector<ElementUndRichtung>& unverbogen,
     const std::vector<ElementUndRichtung>& verbogen,
-    const std::vector<std::pair<double, double>> kruemmungen) {
+    const std::vector<std::pair<double, double>> biegeparameter) {
   std::unordered_map<std::size_t, double> result;
 
   const auto& zuordnung = BerechneElementZuordnung(verbogen, unverbogen);
-  auto itKruemmungen = kruemmungen.begin();
-  assert(itKruemmungen != kruemmungen.end());
+  auto itBiegeparameter = biegeparameter.begin();
+  assert(itBiegeparameter != biegeparameter.end());
   double lauflaenge = 0;
   double winkelVorherEndeNeu = 0;
   for (size_t i = 0, len = verbogen.size(); i < len; ++i) {
     const auto& el = verbogen[i];
     const auto& elUnverbogen = unverbogen[zuordnung[i]];
 
-    while (lauflaenge > itKruemmungen->first + 2.5) {
-      ++itKruemmungen;
-      assert(itKruemmungen != kruemmungen.end());
+    while (lauflaenge > itBiegeparameter->first + 2.5) {
+      ++itBiegeparameter;
+      assert(itBiegeparameter != biegeparameter.end());
     }
 
-    auto krNeu = GetKruemmung(elUnverbogen) + itKruemmungen->second;
+    auto krNeu = GetKruemmung(elUnverbogen) + itBiegeparameter->second;
     if (!el.second) {
       krNeu = -krNeu;
     }
@@ -335,7 +335,7 @@ std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(
       << " (vs. vorher " << HundertstelGrad(knickAlt) << ": " << (knickAlt == 0.0 ? 0 : (knickNeu/knickAlt * 100)) << "%, "
       << "vs. unverbogen " << HundertstelGrad(knickUnverbogen) << ": " << (knickUnverbogen == 0.0 ? 0 : (knickNeu/knickUnverbogen * 100)) << "%)\n";
 
-    std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff = " << itKruemmungen->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
+    std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff = " << itBiegeparameter->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
     result.emplace(el.first->Nr, krNeu);
 
     winkelVorherEndeNeu = GetWinkel(el, ElementEnde::Ende, krNeu);
@@ -496,14 +496,14 @@ int main(int argc, char* argv[]) {
         std::cout << "Lies Bogenweichen-Parameter aus verbogener LS3-Datei " << dateinameErsterSignalframe << "\n";
         const auto& ls3Verbogen = zusixml::parseFile(zusixml::zusiPfadZuOsPfad(dateinameErsterSignalframe, ""));
         if (ls3Verbogen) {
-          krdiffs = LiesWeichenKruemmung(*ls3Verbogen, ElementLaenge(*originalweiche.startElement.first));  // Laenge des Verzweigungselements soll nicht in Lauflaenge enthalten sein
+          krdiffs = LiesBiegeparameter(*ls3Verbogen, ElementLaenge(*originalweiche.startElement.first));  // Laenge des Verzweigungselements soll nicht in Lauflaenge enthalten sein
         } else {
           std::cout << "Fehler beim Einlesen\n";
         }
 
         if (krdiffs.empty()) {
           std::cout << "Berechne Bogenweichen-Parameter aus den Kruemmungsunterschieden des geraden Strangs\n";
-          krdiffs = BerechneWeichenKruemmung(originalweiche.geraderStrang, bogenweiche.geraderStrang);
+          krdiffs = BerechneBiegeparameter(originalweiche.geraderStrang, bogenweiche.geraderStrang);
         }
 
         std::cout << "Wende Bogenweichen-Parameter auf abzweigenden Strang an\n";
