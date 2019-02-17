@@ -313,7 +313,10 @@ std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(
       assert(itKruemmungen != kruemmungen.end());
     }
 
-    const auto krNeu = GetKruemmung(elUnverbogen) + itKruemmungen->second;
+    auto krNeu = GetKruemmung(elUnverbogen) + itKruemmungen->second;
+    if (!el.second) {
+      krNeu = -krNeu;
+    }
 
     const auto& elVorherVerbogen = (i == 0 ? startElementVerbogen : verbogen[i-1]);
     const auto& elVorherUnverbogen = (i == 0 ? startElementUnverbogen : unverbogen[zuordnung[i-1]]);
