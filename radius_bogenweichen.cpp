@@ -303,7 +303,7 @@ std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(
   auto itBiegeparameter = biegeparameter.begin();
   assert(itBiegeparameter != biegeparameter.end());
   double lauflaenge = 0;
-  double winkelVorherEndeNeu = 0;
+  double winkelVorherEndeNeu;  // wird im ersten Schleifendurchlauf initialisiert
   for (size_t i = 0, len = verbogen.size(); i < len; ++i) {
     const auto& el = verbogen[i];
     const auto& elUnverbogen = unverbogen[zuordnung[i]];
@@ -322,6 +322,9 @@ std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(
     const auto& elVorherUnverbogen = (i == 0 ? startElementUnverbogen : unverbogen[zuordnung[i-1]]);
 
     const auto winkelEl1EndeAlt = GetWinkel(elVorherVerbogen, ElementEnde::Ende);
+    if (i == 0) {
+      winkelVorherEndeNeu = winkelEl1EndeAlt;
+    }
     const auto winkelEl2AnfangAlt = GetWinkel(el, ElementEnde::Anfang);
     const auto winkelEl2AnfangNeu = GetWinkel(el, ElementEnde::Anfang, krNeu);
     const auto winkelEl1UnverbogenEnde = GetWinkel(elVorherUnverbogen, ElementEnde::Ende);
