@@ -1,3 +1,5 @@
+49 100 1-5 Links;PermanentWay\Deutschland\1435mm\nichtbundeseigen\Weichen\100\49_100_1-5_Links_Holzschw_K-Oberbau.st3
+49 100 1-5 Rechts;PermanentWay\Deutschland\1435mm\nichtbundeseigen\Weichen\100\49_100_1-5_Rechts_Holzschw_K-Oberbau.st3
 49 300 1-14 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\49 300 1-14 Links Holzschw K-Oberbau.st3
 49 300 1-14 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\49 300 1-14 Rechts Holzschw K-Oberbau.st3
 54 1200 1-18_5 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\54 1200 1-18_5 Links Holzschw K-Oberbau.st3
@@ -42,3 +44,5 @@
 60_760_1-14fb_Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-14fb_Rechts_Betonschw_K-Oberbau.st3
 60_760_1-18_5fb_Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-18_5fb_Links_Betonschw_K-Oberbau.st3
 60_760_1-18_5fb_Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-18_5fb_Rechts_Betonschw_K-Oberbau.st3
+8a 140 1-7 Links;PermanentWay\Deutschland\1435mm\Preussen\Weichen\140\8a 140 1-7 Links Holzschw K-Oberbau.st3
+8a 140 1-7 Rechts;PermanentWay\Deutschland\1435mm\Preussen\Weichen\140\8a 140 1-7 Rechts Holzschw K-Oberbau.st3
