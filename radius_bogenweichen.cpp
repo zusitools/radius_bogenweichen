@@ -99,6 +99,7 @@ std::vector<Weiche> FindeWeichen(const Strecke& str, bool nurBogenweichen = fals
 
       if ((dateiname.find("DKW") != std::string::npos)
           || (dateiname.find("EKW") != std::string::npos)
+          || (dateiname.find("symm ABW") != std::string::npos)
           || (dateiname.find("WA-WM") != std::string::npos)) {
         continue;
       }
@@ -131,19 +132,35 @@ std::vector<std::pair<std::string, std::string>> GetWeichenMapping() {
 
     std::string pattern = line.substr(0, semicolonPos);
     std::string datei = line.substr(semicolonPos + 1);
-    std::cout << pattern << " -> " << datei << "\n";
-    result.emplace_back(pattern, datei);
 
-    // Neueste z3strbie.dll entfernt Leerzeichen im Dateinamen
-    auto pos = pattern.find(' ');
+    // In manchen Weichennamen wurden Leerzeichen durch Unterstriche ersetzt
+    std::string patternUnterstrich = pattern;
+    auto pos = patternUnterstrich.find(' ');
     if (pos != std::string::npos) {
       while (pos != std::string::npos) {
-        pattern.erase(pos, 1);
-        pos = pattern.find(' ');
+        patternUnterstrich[pos] = '_';
+        pos = patternUnterstrich.find(' ');
       }
-      std::cout << pattern << " -> " << datei << "\n";
-      result.emplace_back(std::move(pattern), std::move(datei));
     }
+
+    // Neueste z3strbie.dll entfernt Leerzeichen im Dateinamen
+    std::string patternOhneLeerzeichen = pattern;
+    pos = patternOhneLeerzeichen.find(' ');
+    if (pos != std::string::npos) {
+      while (pos != std::string::npos) {
+        patternOhneLeerzeichen.erase(pos, 1);
+        pos = patternOhneLeerzeichen.find(' ');
+      }
+    }
+
+    std::cout << pattern << " -> " << datei << "\n";
+    if (patternUnterstrich != pattern) {
+      result.emplace_back(std::move(patternUnterstrich), datei);
+    }
+    if (patternOhneLeerzeichen != pattern) {
+      result.emplace_back(std::move(patternOhneLeerzeichen), datei);
+    }
+    result.emplace_back(std::move(pattern), std::move(datei));
   };
 
   return result;
@@ -426,8 +443,22 @@ int main(int argc, char* argv[]) {
   std::unordered_map<std::size_t, double> kruemmungenNeu;
   for (auto& bogenweiche : FindeWeichen(*zusi->Strecke, true)) {  // non-const wg. std::swap(geraderStrang, abzweigenderStrang)
     std::cout << "\nBogenweiche gefunden an Element " << bogenweiche.startElement.first->Nr << "\n";
-    std::cout << "Erster Signalframe:\n";
-    const auto& dateinameErsterSignalframe = bogenweiche.weichensignal->children_SignalFrame.at(0)->Datei.Dateiname;
+    std::cout << "Erster Signalframe an Position (0,0,0):\n";
+    const auto& signalframes = bogenweiche.weichensignal->children_SignalFrame;
+    const auto& itErsterSignalframe = std::find_if(signalframes.begin(), signalframes.end(),
+        [](const auto& signalframe) {
+          return std::abs(signalframe->p.X) < 0.0001
+            && std::abs(signalframe->p.Y) < 0.0001
+            && std::abs(signalframe->p.Z) < 0.0001;
+        });
+
+    if (itErsterSignalframe == signalframes.end()) {
+      std::cout << "Kein Signalframe an Position (0, 0, 0), unverbogene Weiche kann nicht ermittelt werden\n";
+      result = 1;
+      continue;
+    }
+
+    const auto& dateinameErsterSignalframe = (*itErsterSignalframe)->Datei.Dateiname;
     std::cout << " - " << dateinameErsterSignalframe << "\n";
 
     std::cout << "Elemente in Strang 1:\n";
