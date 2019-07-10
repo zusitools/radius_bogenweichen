@@ -1,48 +1,52 @@
 49 100 1-5 Links;PermanentWay\Deutschland\1435mm\nichtbundeseigen\Weichen\100\49_100_1-5_Links_Holzschw_K-Oberbau.st3
 49 100 1-5 Rechts;PermanentWay\Deutschland\1435mm\nichtbundeseigen\Weichen\100\49_100_1-5_Rechts_Holzschw_K-Oberbau.st3
-49 300 1-14 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\49 300 1-14 Links Holzschw K-Oberbau.st3
-49 300 1-14 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\49 300 1-14 Rechts Holzschw K-Oberbau.st3
-54 1200 1-18_5 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\54 1200 1-18_5 Links Holzschw K-Oberbau.st3
-54 1200 1-18_5 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\54 1200 1-18_5 Rechts Holzschw K-Oberbau.st3
-54 1200 1-19_277 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\54 1200 1-19_277 Links Holzschw K-Oberbau.st3
-54 1200 1-19_277 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\54 1200 1-19_277 Rechts Holzschw K-Oberbau.st3
-54 190 1-7_5 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54 190 1-7_5 Links Betonschw K-Oberbau.st3
-54 190 1-7_5 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54 190 1-7_5 Rechts Betonschw K-Oberbau.st3
-54 190 1-9 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54 190 1-9 Links Betonschw K-Oberbau.st3
-54 190 1-9 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54 190 1-9 Rechts Betonschw K-Oberbau.st3
-54 300 1-14 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54 300 1-14 Links Betonschw K-Oberbau.st3
-54 300 1-14 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54 300 1-14 Rechts Betonschw K-Oberbau.st3
-54 300 1-9 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54 300 1-9 Links Betonschw K-Oberbau.st3
-54 300 1-9 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54 300 1-9 Rechts Betonschw K-Oberbau.st3
-54 300 1-9_4 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54 300 1-9_4 Links Holzschw K-Oberbau.st3
-54 300 1-9_4 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54 300 1-9_4 Rechts Holzschw K-Oberbau.st3
-54 500 1-12 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54 500 1-12 Links Betonschw K-Oberbau.st3
-54 500 1-12 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54 500 1-12 Rechts Betonschw K-Oberbau.st3
-54 500 1-14 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54 500 1-14 Links Betonschw K-Oberbau.st3
-54 500 1-14 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54 500 1-14 Rechts Betonschw K-Oberbau.st3
-54 500 1-9 1-12 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54 500 1-9 1-12 Links Betonschw K-Oberbau.st3
-54 500 1-9 1-12 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54 500 1-9 1-12 Rechts Betonschw K-Oberbau.st3
-54 760 1-14 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\54 760 1-14 Links Betonschw K-Oberbau.st3
-54 760 1-14 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\54 760 1-14 Rechts Betonschw K-Oberbau.st3
-54 760 1-18_5 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\54 760 1-18_5 Links Betonschw K-Oberbau.st3
-54 760 1-18_5 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\54 760 1-18_5 Rechts Betonschw K-Oberbau.st3
+49 300 1-14 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\49_300_1-14_Links_Holzschw_K-Oberbau.st3
+49 300 1-14 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\49_300_1-14_Rechts_Holzschw_K-Oberbau.st3
+54 1200 1-18_5 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\54_1200_1-18_5_Links_Holzschw_K-Oberbau.st3
+54 1200 1-18_5 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\54_1200_1-18_5_Rechts_Holzschw_K-Oberbau.st3
+54 1200 1-19_277 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\54_1200_1-19_277_Links_Holzschw_K-Oberbau.st3
+54 1200 1-19_277 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\54_1200_1-19_277_Rechts_Holzschw_K-Oberbau.st3
+54 190 1-7_5 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54_190_1-7_5_Links_Betonschw_K-Oberbau.st3
+54 190 1-7_5 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54_190_1-7_5_Rechts_Betonschw_K-Oberbau.st3
+54 190 1-9 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54_190_1-9_Links_Betonschw_K-Oberbau.st3
+54 190 1-9 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54_190_1-9_Rechts_Betonschw_K-Oberbau.st3
+54 300 1-14 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54_300_1-14_Links_Betonschw_K-Oberbau.st3
+54 300 1-14 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54_300_1-14_Rechts_Betonschw_K-Oberbau.st3
+54 300 1-9 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54_300_1-9_Links_Betonschw_K-Oberbau.st3
+54 300 1-9 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54_300_1-9_Rechts_Betonschw_K-Oberbau.st3
+54 300 1-9_4 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54_300_1-9_4_Links_Holzschw_K-Oberbau.st3
+54 300 1-9_4 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\300\54_300_1-9_4_Rechts_Holzschw_K-Oberbau.st3
+54 500 1-12 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54_500_1-12_Links_Betonschw_K-Oberbau.st3
+54 500 1-12 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54_500_1-12_Rechts_Betonschw_K-Oberbau.st3
+54 500 1-14 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54_500_1-14_Links_Betonschw_K-Oberbau.st3
+54 500 1-14 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54_500_1-14_Rechts_Betonschw_K-Oberbau.st3
+54 500 1-9 1-12 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54_500_1-9_1-12_Links_Betonschw_K-Oberbau.st3
+54 500 1-9 1-12 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\500\54_500_1-9_1-12_Rechts_Betonschw_K-Oberbau.st3
+54 760 1-14 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\54_760_1-14_Links_Betonschw_K-Oberbau.st3
+54 760 1-14 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\54_760_1-14_Rechts_Betonschw_K-Oberbau.st3
+54 760 1-18_5 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\54_760_1-18_5_Links_Betonschw_K-Oberbau.st3
+54 760 1-18_5 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\54_760_1-18_5_Rechts_Betonschw_K-Oberbau.st3
 54_190_1-7_5_Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54_190_1-7_5_Links_Holzschw_K-Oberbau_rost.st3
 54_190_1-7_5_Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54_190_1-7_5_Rechts_Holzschw_K-Oberbau_rost.st3
 54_190_1-9_Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54_190_1-9_Links_Holzschw_K-Oberbau_rost.st3
 54_190_1-9_Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\190\54_190_1-9_Rechts_Holzschw_K-Oberbau_rost.st3
-60 1200 1-18_5 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60 1200 1-18_5 Links Betonschw K-Oberbau.st3
-60 1200 1-18_5 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60 1200 1-18_5 Rechts Betonschw K-Oberbau.st3
-60 1200 1-18_5fb Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60 1200 1-18_5fb Links Betonschw K-Oberbau.st3
-60 1200 1-18_5fb Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60 1200 1-18_5fb Rechts Betonschw K-Oberbau.st3
-60 1200 1-19_277 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60 1200 1-19_277 Links Betonschw K-Oberbau.st3
-60 1200 1-19_277 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60 1200 1-19_277 Rechts Betonschw K-Oberbau.st3
-60 2500 1_26-5fb Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\2500\60 2500 1_26-5fb Links Betonschwellen.st3
-60 2500 1_26-5fb Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\2500\60 2500 1_26-5fb Rechts Betonschwellen.st3
+60 1200 1-18_5 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60_1200_1-18_5_Links_Betonschw_K-Oberbau.st3
+60 1200 1-18_5 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60_1200_1-18_5_Rechts_Betonschw_K-Oberbau.st3
+60 1200 1-18_5fb Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60_1200_1-18_5fb_Links_Betonschw_K-Oberbau.st3
+60 1200 1-18_5fb Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60_1200_1-18_5fb_Rechts_Betonschw_K-Oberbau.st3
+60 1200 1-19_277 Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60_1200_1-19_277_Links_Betonschw_K-Oberbau.st3
+60 1200 1-19_277 Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\1200\60_1200_1-19_277_Rechts_Betonschw_K-Oberbau.st3
+60 2500 1_26-5fb Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\2500\60_2500_1_26-5fb_Links_Betonschwellen.st3
+60 2500 1_26-5fb Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\2500\60_2500_1_26-5fb_Rechts_Betonschwellen.st3
 60_10000-4000-fb_1-32_05_Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\10000-4000\60_10000-4000-fb_1-32_05_Links_Betonschw.st3
 60_10000-4000-fb_1-32_05_Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\10000-4000\60_10000-4000-fb_1-32_05_Rechts_Betonschw.st3
 60_760_1-14fb_Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-14fb_Links_Betonschw_K-Oberbau.st3
 60_760_1-14fb_Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-14fb_Rechts_Betonschw_K-Oberbau.st3
+60_760_1-14_fb_Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-14fb_Links_Betonschw_K-Oberbau.st3
+60_760_1-14_fb_Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-14fb_Rechts_Betonschw_K-Oberbau.st3
 60_760_1-18_5fb_Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-18_5fb_Links_Betonschw_K-Oberbau.st3
 60_760_1-18_5fb_Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-18_5fb_Rechts_Betonschw_K-Oberbau.st3
-8a 140 1-7 Links;PermanentWay\Deutschland\1435mm\Preussen\Weichen\140\8a 140 1-7 Links Holzschw K-Oberbau.st3
-8a 140 1-7 Rechts;PermanentWay\Deutschland\1435mm\Preussen\Weichen\140\8a 140 1-7 Rechts Holzschw K-Oberbau.st3
+60_760_1-18_5_fb_Links;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-18_5fb_Links_Betonschw_K-Oberbau.st3
+60_760_1-18_5_fb_Rechts;PermanentWay\Deutschland\1435mm\Regeloberbau\Weichen\760\60_760_1-18_5fb_Rechts_Betonschw_K-Oberbau.st3
+8a 140 1-7 Links;PermanentWay\Deutschland\1435mm\Preussen\Weichen\140\8a_140_1-7_Links_Holzschw_K-Oberbau.st3
+8a 140 1-7 Rechts;PermanentWay\Deutschland\1435mm\Preussen\Weichen\140\8a_140_1-7_Rechts_Holzschw_K-Oberbau.st3

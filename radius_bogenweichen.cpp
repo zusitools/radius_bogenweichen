@@ -100,7 +100,10 @@ std::vector<Weiche> FindeWeichen(const Strecke& str, bool nurBogenweichen = fals
       if ((dateiname.find("DKW") != std::string::npos)
           || (dateiname.find("EKW") != std::string::npos)
           || (dateiname.find("symm ABW") != std::string::npos)
-          || (dateiname.find("WA-WM") != std::string::npos)) {
+          || (dateiname.find("symm_ABW") != std::string::npos)
+          || (dateiname.find("WA-WM") != std::string::npos)
+          || (dateiname.find("Zunge") != std::string::npos)
+          || (dateiname.find("ZDW") != std::string::npos)) {
         continue;
       }
 
@@ -153,12 +156,25 @@ std::vector<std::pair<std::string, std::string>> GetWeichenMapping() {
       }
     }
 
+    // In Zusi 3.3.0.0 wurden Leerzeichen konsequent durch Unterstriche ersetzt
+    std::string patternUnterstrichStattLeerzeichen = pattern;
+    pos = patternUnterstrichStattLeerzeichen.find(' ');
+    if (pos != std::string::npos) {
+      while (pos != std::string::npos) {
+        patternUnterstrichStattLeerzeichen.erase(pos, 1);
+        pos = patternUnterstrichStattLeerzeichen.find(' ');
+      }
+    }
+
     std::cout << pattern << " -> " << datei << "\n";
     if (patternUnterstrich != pattern) {
       result.emplace_back(std::move(patternUnterstrich), datei);
     }
     if (patternOhneLeerzeichen != pattern) {
       result.emplace_back(std::move(patternOhneLeerzeichen), datei);
+    }
+    if (patternUnterstrichStattLeerzeichen != pattern) {
+      result.emplace_back(std::move(patternUnterstrichStattLeerzeichen), datei);
     }
     result.emplace_back(std::move(pattern), std::move(datei));
   };
