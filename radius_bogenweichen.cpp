@@ -571,9 +571,7 @@ int main(int argc, char* argv[]) {
     }
   }
 
-#if 0
   SchreibeNeueKruemmungen(argv[1], kruemmungenNeu);
-#endif
 
   return result;
 }
