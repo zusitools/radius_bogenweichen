@@ -331,6 +331,10 @@ std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(
     const auto& el = verbogen[i];
     const auto& elUnverbogen = unverbogen[zuordnung[i]];
 
+    if ((i < len - 1 && zuordnung[i] == zuordnung[i+1]) && (i == 0 || zuordnung[i] != zuordnung[i-1])) {
+      std::cout << "  ! Element " << elUnverbogen.first->Nr << " wurde vom Gleisplaneditor vor dem Biegen zerteilt, vermutlich keine sinnvolle Berechnung moeglich\n";
+    }
+
     while (lauflaenge > itBiegeparameter->first + 2.5) {
       ++itBiegeparameter;
       assert(itBiegeparameter != biegeparameter.end());
