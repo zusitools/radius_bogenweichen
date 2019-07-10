@@ -362,8 +362,8 @@ std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(
     const auto knickUnverbogen = WinkelDiff(winkelEl1UnverbogenEnde, winkelEl2UnverbogenAnfang);
 
     std::cout << "  > Knick " << HundertstelGrad(knickNeu)
-      << " (vs. vorher " << HundertstelGrad(knickAlt) << ": " << (knickAlt == 0.0 ? 0 : (knickNeu/knickAlt * 100)) << "%, "
-      << "vs. unverbogen " << HundertstelGrad(knickUnverbogen) << ": " << (knickUnverbogen == 0.0 ? 0 : (knickNeu/knickUnverbogen * 100)) << "%)\n";
+      << " (vs. vorher " << HundertstelGrad(knickAlt) << ": " << std::showpos << (knickAlt == 0.0 ? 0 : ((knickNeu-knickAlt)/knickAlt * 100)) << std::noshowpos << "%, "
+      << "vs. unverbogen " << HundertstelGrad(knickUnverbogen) << ": " << std::showpos << (knickUnverbogen == 0.0 ? 0 : ((knickNeu-knickUnverbogen)/knickUnverbogen * 100)) << std::noshowpos << "%)\n";
 
     std::cout << " - Lauflaenge " << lauflaenge << ": verbogen " << el.first->Nr << " -> unverbogen " << elUnverbogen.first->Nr << ", krdiff = " << itBiegeparameter->second << " -> setze kr=" << krNeu << "/r=" << Radius(krNeu) << "\n";
     result.emplace(el.first->Nr, krNeu);
