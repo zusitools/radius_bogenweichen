@@ -182,14 +182,20 @@ const Vec3& GetElementEnde(const ElementUndRichtung& elementRichtung, ElementEnd
   return (elementRichtung.second == (ende == ElementEnde::Anfang)) ? elementRichtung.first->g : elementRichtung.first->b;
 }
 
-double NormalisiereWinkel(double rad) {
-  if (rad > M_PI) {
-    return M_2_PI - rad;
-  } else if (rad < -M_PI) {
-    return rad + M_2_PI;
-  } else {
-    return rad;
-  }
+double WinkelDiff(double phi1, double phi2) {
+  // phi1, phi2 sind im Intervall [-π, π]
+  auto result = phi1 - phi2;  // im Intervall [-2π, 2π]
+  result = std::abs(result);  // im Intervall [0, 2π]
+  result = result - M_PI;     // im Intervall [-π, π]
+  result = std::abs(result);  // im Intervall [0, π]
+  result = M_PI - result;     // im Intervall [0, π]
+  return result;
+  // return M_PI - std::abs(std::abs(phi1 - phi2) - M_PI);
+}
+
+bool LinksVon(double phi1, double phi2) {
+  const auto diff = phi1 - phi2;
+  return (diff > 0) || (diff < -M_PI);
 }
 
 double GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, double kr /* in Normrichtung */) {
@@ -216,7 +222,7 @@ double GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende, do
     }
   }
 
-  return NormalisiereWinkel(result);
+  return result;
 }
 
 double GetWinkel(const ElementUndRichtung& elementRichtung, ElementEnde ende) {
@@ -347,9 +353,9 @@ std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(
     const auto winkelEl1UnverbogenEnde = GetWinkel(elVorherUnverbogen, ElementEnde::Ende);
     const auto winkelEl2UnverbogenAnfang = GetWinkel(elUnverbogen, ElementEnde::Anfang);
 
-    const auto knickAlt = std::abs(winkelEl1EndeAlt - winkelEl2AnfangAlt);
-    const auto knickNeu = std::abs(winkelVorherEndeNeu - winkelEl2AnfangNeu);
-    const auto knickUnverbogen = std::abs(winkelEl1UnverbogenEnde - winkelEl2UnverbogenAnfang);
+    const auto knickAlt = WinkelDiff(winkelEl1EndeAlt, winkelEl2AnfangAlt);
+    const auto knickNeu = WinkelDiff(winkelVorherEndeNeu, winkelEl2AnfangNeu);
+    const auto knickUnverbogen = WinkelDiff(winkelEl1UnverbogenEnde, winkelEl2UnverbogenAnfang);
 
     std::cout << "  > Knick " << HundertstelGrad(knickNeu)
       << " (vs. vorher " << HundertstelGrad(knickAlt) << ": " << (knickAlt == 0.0 ? 0 : (knickNeu/knickAlt * 100)) << "%, "
@@ -433,7 +439,7 @@ int main(int argc, char* argv[]) {
         const auto winkelEl1Ende = GetWinkel(el, ElementEnde::Ende);
         const auto winkelEl2Anfang = GetWinkel(el2, ElementEnde::Anfang);
         // std::cout << ", w1=" << winkelEl1Ende << ", w2=" << winkelEl2Anfang;
-        const auto knick = std::abs(winkelEl1Ende - winkelEl2Anfang);
+        const auto knick = WinkelDiff(winkelEl1Ende, winkelEl2Anfang);
         std::cout << "  > Knick " << HundertstelGrad(knick) << "\n";
       }
     }
@@ -513,13 +519,13 @@ int main(int argc, char* argv[]) {
 
         const auto winkelBogenweicheP1 = atan2(bogenweicheP1.Y - bogenweicheScheitel.Y, bogenweicheP1.X - bogenweicheScheitel.X);
         const auto winkelBogenweicheP2 = atan2(bogenweicheP2.Y - bogenweicheScheitel.Y, bogenweicheP2.X - bogenweicheScheitel.X);
-        const auto winkelDiffBogenweiche = NormalisiereWinkel(winkelBogenweicheP2 - winkelBogenweicheP1);
+        const auto winkelDiffBogenweiche = LinksVon(winkelBogenweicheP2, winkelBogenweicheP1);
 
         const auto winkelOriginalweicheP1 = atan2(originalweicheP1.Y - originalweicheScheitel.Y, originalweicheP1.X - originalweicheScheitel.X);
         const auto winkelOriginalweicheP2 = atan2(originalweicheP2.Y - originalweicheScheitel.Y, originalweicheP2.X - originalweicheScheitel.X);
-        const auto winkelDiffOriginalweiche = NormalisiereWinkel(winkelOriginalweicheP2 - winkelOriginalweicheP1);
+        const auto winkelDiffOriginalweiche = LinksVon(winkelOriginalweicheP2, winkelOriginalweicheP1);
 
-        if ((winkelDiffBogenweiche > 0) != (winkelDiffOriginalweiche > 0)) {
+        if (winkelDiffBogenweiche != winkelDiffOriginalweiche) {
           std::swap(bogenweiche.geraderStrang, bogenweiche.abzweigenderStrang);
           std::cout << "Strang 2 in Bogenweiche ist gerader Strang, Strang 1 ist abzweigender Strang\n";
         } else {
