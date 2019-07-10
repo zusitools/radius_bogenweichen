@@ -319,7 +319,7 @@ std::unordered_map<std::size_t, double> KorrigiereKruemmungAbzweigenderStrang(
     const ElementUndRichtung& startElementVerbogen,
     const std::vector<ElementUndRichtung>& unverbogen,
     const std::vector<ElementUndRichtung>& verbogen,
-    const std::vector<std::pair<double, double>> biegeparameter) {
+    const std::vector<std::pair<double, double>>& biegeparameter) {
   std::unordered_map<std::size_t, double> result;
 
   const auto& zuordnung = BerechneElementZuordnung(verbogen, unverbogen);
@@ -380,7 +380,6 @@ void SchreibeNeueKruemmungen(const char* dateiname, const std::unordered_map<siz
   auto* const zusi_node = doc.first_node("Zusi");
   auto* const strecke_node = zusi_node->first_node("Strecke");
 
-  // Neue Register und Registerverknuepfungen
   for (auto* str_element_node = strecke_node->first_node("StrElement"); str_element_node; str_element_node = str_element_node->next_sibling("StrElement")) {
     const auto* const nr_attrib = str_element_node->first_attribute("Nr");
     if (!nr_attrib) {
