@@ -452,6 +452,9 @@ int main(int argc, char* argv[]) {
   std::unordered_map<std::size_t, double> kruemmungenNeu;
   for (auto& bogenweiche : FindeWeichen(*zusi->Strecke, true)) {  // non-const wg. std::swap(geraderStrang, abzweigenderStrang)
     std::cout << "\nBogenweiche gefunden an Element " << bogenweiche.startElement.first->Nr << "\n";
+    if ((argc >= 3) and (bogenweiche.startElement.first->Nr != atoi(argv[2]))) {
+      continue;
+    }
     if (bogenweiche.geraderStrang.empty() || bogenweiche.abzweigenderStrang.empty()) {
       std::cout << "Im geraden oder abzweigenden Strang sind keine Elemente vorhanden. Wurde vergessen, nach dem ST3-Export das Streckennetz neu zu verknuepfen?\n";
       result = 1;
