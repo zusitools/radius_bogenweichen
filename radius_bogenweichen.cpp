@@ -504,7 +504,7 @@ int main(int argc, char* argv[]) {
     for (const auto& it : OriginalWeichen) {
       if (dateinameErsterSignalframe.find(it.first) != std::string::npos) {
         std::cout << "Unverbogene Weiche: " << it.second << "\n";
-        const auto& st3Original = zusixml::parseFile(zusixml::zusiPfadZuOsPfad(it.second, ""));
+        const auto& st3Original = zusixml::parseFile(zusixml::ZusiPfad::vonZusiPfad(it.second).alsOsPfad());
         if (!st3Original || !st3Original->Strecke) {
           result = 1;
           std::cout << "Fehler beim Parsen\n";
@@ -561,7 +561,7 @@ int main(int argc, char* argv[]) {
 
         std::vector<std::pair<double, double>> krdiffs;
         std::cout << "Lies Bogenweichen-Parameter aus verbogener LS3-Datei " << dateinameErsterSignalframe << "\n";
-        const auto& ls3Verbogen = zusixml::parseFile(zusixml::zusiPfadZuOsPfad(dateinameErsterSignalframe, ""));
+        const auto& ls3Verbogen = zusixml::parseFile(zusixml::ZusiPfad::vonZusiPfad(dateinameErsterSignalframe).alsOsPfad());
         if (ls3Verbogen) {
           krdiffs = LiesBiegeparameter(*ls3Verbogen, ElementLaenge(*originalweiche.startElement.first));  // Laenge des Verzweigungselements soll nicht in Lauflaenge enthalten sein
         } else {
